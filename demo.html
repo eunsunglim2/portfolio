@@ -1,0 +1,870 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HR 자동화 데모</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f6f7f6;--surface:#ffffff;--ink:#16201f;--ink-2:#4b5856;--ink-3:#7f8b89;--line:#dde3e1;
+  --accent:#1f5a63;--tint:#e6efef;--ok:#2f7d5b;--ok-tint:#e3f1ea;--hold:#a5671a;--hold-tint:#f7ecda;
+  --display:"Hahmlet","Nanum Myeongjo",serif;
+  --body:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+  --ease:cubic-bezier(.32,.72,0,1);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1514;--surface:#151d1c;--ink:#e7ecea;--ink-2:#a9b5b2;--ink-3:#77837f;--line:#26302e;--accent:#7cc3c4;--tint:#1a2a2a;
+  --ok:#6fc49b;--ok-tint:#173027;--hold:#e0a957;--hold-tint:#33281a;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1514;--surface:#151d1c;--ink:#e7ecea;--ink-2:#a9b5b2;--ink-3:#77837f;--line:#26302e;--accent:#7cc3c4;--tint:#1a2a2a;
+  --ok:#6fc49b;--ok-tint:#173027;--hold:#e0a957;--hold-tint:#33281a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.7;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+a{color:var(--accent)}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.015em;text-wrap:balance}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+
+.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:28px 0 0;font-size:14px;color:var(--ink-2)}
+.notice{background:var(--tint);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--ink-2);margin-top:20px}
+
+.hero{padding:56px 0 24px}
+.hero h1{font-size:clamp(30px,5vw,52px);line-height:1.15;max-width:18ch}
+.hero p{margin:18px 0 0;color:var(--ink-2);max-width:60ch;font-size:17px}
+
+/* approval simulator */
+.sim{margin-top:32px;background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.sim-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:18px 22px;border-bottom:1px solid var(--line)}
+.sim-head h2{font-size:20px}
+.sim-head .sub{font-size:13px;color:var(--ink-3)}
+.run{background:var(--accent);color:var(--bg);border:0;border-radius:10px;padding:10px 18px;font-weight:600}
+.run[disabled]{opacity:.5;cursor:default}
+.ghost{background:transparent;color:var(--accent);border:1px solid var(--line);border-radius:10px;padding:9px 16px;font-weight:600}
+.docs{list-style:none;margin:0;padding:0}
+.doc{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 92px;gap:14px;align-items:center;padding:14px 22px;border-bottom:1px solid var(--line);transition:background .4s var(--ease)}
+.doc:last-child{border-bottom:0}
+.doc .t{font-weight:600}
+.doc .m{font-size:13px;color:var(--ink-3)}
+.doc .why{font-size:13.5px;color:var(--ink-2);min-height:1.2em}
+.badge{justify-self:end;font-size:13px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--bg);color:var(--ink-3);white-space:nowrap}
+.doc.checking{background:var(--tint)}
+.doc.ok .badge{background:var(--ok-tint);color:var(--ok)}
+.doc.hold .badge{background:var(--hold-tint);color:var(--hold)}
+@media (max-width:680px){
+  .doc{grid-template-columns:minmax(0,1fr) auto;row-gap:4px}
+  .doc .why{grid-column:1 / -1;order:3}
+}
+
+.result{display:none;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:28px;padding:24px 22px;border-top:1px solid var(--line);background:var(--bg)}
+.result.show{display:grid}
+@media (max-width:760px){.result{grid-template-columns:1fr}}
+.tally{display:flex;gap:28px;flex-wrap:wrap}
+.tally b{display:block;font-family:var(--display);font-size:40px;line-height:1.1}
+.tally .ok b{color:var(--ok)} .tally .hold b{color:var(--hold)}
+.tally span{font-size:14px;color:var(--ink-2)}
+.result p{font-size:14.5px;color:var(--ink-2);margin:14px 0 0}
+
+/* chat message */
+.msg{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:14.5px}
+.msg .who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.msg .av{width:32px;height:32px;border-radius:8px;background:var(--accent);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:14px}
+.msg .who b{font-size:14.5px} .msg .who span{font-size:12.5px;color:var(--ink-3)}
+.msg ul{margin:6px 0 0;padding-left:18px}
+.msg .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.msg .actions button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:6px 12px;font-size:13.5px}
+.msg .actions button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.msg .done{margin-top:12px;font-size:13.5px;color:var(--ok);font-weight:600}
+
+/* other systems */
+section.sys{padding:72px 0 0}
+.sys-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:32px;align-items:end;margin-bottom:22px}
+.sys-head h2{font-size:clamp(24px,3vw,32px)}
+.sys-head p{margin:0;color:var(--ink-2);font-size:15.5px}
+@media (max-width:760px){.sys-head{grid-template-columns:1fr;gap:10px}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px}
+.two{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:22px;align-items:start}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.label{font-size:13px;color:var(--ink-3);margin-bottom:8px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink-2);padding:8px 16px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.list{margin:0;padding:0;list-style:none;font-size:14.5px}
+.list li{padding:8px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}
+.list li:last-child{border-bottom:0}
+.list li span{color:var(--ink-3)}
+.pair{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:center}
+.person{border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg)}
+.person b{display:block;font-size:16px}
+.person span{font-size:13.5px;color:var(--ink-2)}
+.link{font-family:var(--display);font-size:22px;color:var(--accent)}
+.reasons{margin:16px 0 0;padding-left:18px;font-size:14px;color:var(--ink-2)}
+.bar{height:12px;border-radius:99px;background:var(--bg);border:1px solid var(--line);overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .8s var(--ease)}
+.big{font-family:var(--display);font-size:44px;line-height:1.1}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.small{font-size:13.5px;color:var(--ink-3)}
+
+footer{padding:72px 0 56px;font-size:14px;color:var(--ink-3)}
+footer .line{border-top:1px solid var(--line);padding-top:22px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+
+
+/* index */
+.toc{margin-top:28px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px}
+@media (max-width:900px){.toc{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.toc{grid-template-columns:1fr;gap:14px}}
+.toc h2{font-size:16px;margin-bottom:6px}
+.toc ol{margin:0;padding-left:20px;font-size:14.5px;color:var(--ink-2)}
+.toc a{color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--line)}
+.toc a:hover{color:var(--accent);border-color:var(--accent)}
+.part{padding:96px 0 0}
+.part > h2{font-size:clamp(28px,3.6vw,40px);padding-bottom:14px;border-bottom:2px solid var(--ink)}
+.part > p{color:var(--ink-2);margin:12px 0 0;max-width:62ch}
+.part section.sys{padding-top:56px}
+/* tables in demos */
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{font-size:12.5px;color:var(--ink-3);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl tr.sep td{background:var(--tint);color:var(--ink-3);font-size:12.5px;text-align:center;padding:5px}
+.tbl tr.new td{background:var(--ok-tint)}
+.tbl tr.moved td{color:var(--ink-3)}
+.tbl .filled{color:var(--ok);font-weight:600}
+.tbl-wrap{overflow-x:auto}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.kv div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--bg)}
+.kv b{display:block;font-family:var(--display);font-size:26px;line-height:1.2}
+.kv span{font-size:13px;color:var(--ink-2)}
+@media (max-width:520px){.kv{grid-template-columns:1fr 1fr}}
+.slider{margin:6px 0 16px}
+.slider label{display:flex;justify-content:space-between;font-size:14px;color:var(--ink-2)}
+.slider label b{color:var(--ink)}
+.slider input{width:100%;accent-color:var(--accent)}
+.matrix{border-collapse:collapse;font-size:14px;width:100%}
+.matrix th,.matrix td{border:1px solid var(--line);padding:8px 6px;text-align:center}
+.matrix th{font-size:12.5px;color:var(--ink-3);font-weight:600;background:var(--bg)}
+.matrix td.on{background:var(--accent);color:var(--bg);font-weight:700}
+.picks{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px}
+.picks select{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.steps button{border:1px solid var(--line);background:var(--bg);color:var(--ink-2);border-radius:99px;padding:5px 14px;font-size:13.5px}
+.steps button[aria-current="step"]{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.screen{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--bg);min-height:150px;font-size:14.5px}
+.screen h3{font-size:17px;margin-bottom:8px}
+.bars{display:flex;align-items:flex-end;gap:8px;height:170px;padding-top:10px}
+.bars div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;font-size:12px;color:var(--ink-3);height:100%}
+.bars i{display:block;width:100%;border-radius:6px 6px 0 0;background:var(--line);transition:height .6s var(--ease)}
+.bars i.cur{background:var(--accent)}
+.bars em{font-style:normal;color:var(--ink-2);font-size:12px}
+.mask{color:var(--ink-3)}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+.chips span{font-size:13px;border:1px solid var(--line);border-radius:99px;padding:2px 10px;background:var(--bg);color:var(--ink-2)}
+.qsheet{border:1px solid var(--line);border-radius:14px;background:var(--bg);padding:16px 18px;font-size:14.5px;min-height:180px}
+.qsheet h3{font-size:16px;margin:10px 0 4px}
+.qsheet h3:first-child{margin-top:0}
+.qsheet ol{margin:0;padding-left:20px}
+.qsheet li{margin:4px 0}
+.qsheet .memo{display:block;border-bottom:1px dashed var(--line);height:14px;margin:2px 0 6px}
+.funnel{display:flex;flex-direction:column;gap:8px}
+.funnel .f{display:grid;grid-template-columns:88px minmax(0,1fr) 120px;gap:10px;align-items:center;font-size:14px}
+.funnel .f span{color:var(--ink-2)}
+.funnel .f i{display:block;height:22px;border-radius:6px;background:var(--accent);transition:width .6s var(--ease)}
+.funnel .f.low i{background:var(--hold)}
+.funnel .f b{font-weight:600;font-size:13.5px;text-align:right}
+@media (max-width:520px){.funnel .f{grid-template-columns:64px minmax(0,1fr) 92px}}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form label{font-size:13px;color:var(--ink-3);display:flex;flex-direction:column;gap:4px}
+.form input,.form select{font:inherit;font-size:14.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+@media (max-width:520px){.form{grid-template-columns:1fr}}
+
+.how{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:-8px 0 18px;font-size:14px;color:var(--ink-2)}
+.kind{flex:none;font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:99px;white-space:nowrap}
+.kind.real{background:var(--ok-tint);color:var(--ok)}
+.kind.recon{background:var(--tint);color:var(--accent)}
+.kind.proto{background:var(--hold-tint);color:var(--hold)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px;font-size:14px;color:var(--ink-2);align-items:center}
+.toc .kind{margin-left:6px;font-size:11px;padding:1px 7px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span><b>임은성</b> HR 포트폴리오</span><a href="index.html">포트폴리오로 돌아가기</a></div>
+  <div class="notice">이 페이지의 회사·사람·숫자는 모두 가상입니다. 실제로 운영했던 자동화의 판단 구조만 그대로 옮겼습니다.</div>
+
+  <header class="hero">
+    <h1>규정으로 판정하고, 애매한 건만 사람에게 넘기는 HR 운영</h1>
+    <p>제가 실제로 만들어 운영한 자동화와, 사람이 판단하며 운영한 보상·채용 기준과 분석을 가상의 회사 ‘라이트하우스’(임직원 320명) 데이터로 옮겼습니다. 화면마다 실제로 어땠는지 표시해 두었습니다.</p>
+    <div class="legend"><span class="kind real">실제 운영한 자동화</span>Claude Code·Slack·Apps Script로 만들어 실제로 돌린 것 <span class="kind recon">업무 기준·분석 재현</span>시트와 문서로 사람이 운영한 기준·분석을 화면으로 옮긴 것 <span class="kind proto">프로토타입</span>만들어 봤지만 정식 도입 전인 것</div>
+  </header>
+
+  <nav class="toc" aria-label="데모 목록">
+    <div><h2>운영 자동화 <span class="kind real">실제 운영</span></h2><ol>
+      <li><a href="#sim">인사 결재 자동처리</a></li>
+      <li><a href="#d-master">인사 명부 자동 갱신</a></li>
+      <li><a href="#d-today">결재 현황 알림봇</a></li>
+      <li><a href="#d-onboard">온보딩 공지</a></li>
+      <li><a href="#d-cal">팀장 캘린더 초대</a></li>
+      <li><a href="#d-buddy">버디 매칭</a></li>
+      <li><a href="#d-edu">법정의무교육 독려</a></li>
+      <li><a href="#d-bonus">전속계약금 알림</a></li>
+      <li><a href="#d-tax">소득세 감면 안내</a></li>
+    </ol></div>
+    <div><h2>채용 <span class="kind recon">기준·분석</span></h2><ol start="10">
+      <li><a href="#d-iv">맞춤 면접 질문지</a></li>
+      <li><a href="#d-src">다이렉트 소싱 메시지</a></li>
+      <li><a href="#d-funnel">채용 퍼널 분석</a></li>
+      <li><a href="#d-offer">오퍼 설계 기준</a></li>
+    </ol></div>
+    <div><h2>보상·평가 <span class="kind recon">기준·분석</span></h2><ol start="14">
+      <li><a href="#d-sim">신입 보상 시뮬레이터</a></li>
+      <li><a href="#d-ps">성과급 산정 매트릭스</a></li>
+      <li><a href="#d-eval">평가·보상 시스템 흐름</a></li>
+    </ol></div>
+    <div><h2>데이터 분석 <span class="kind recon">분석</span></h2><ol start="17">
+      <li><a href="#d-leave">휴가 사용률 전후 비교</a></li>
+      <li><a href="#d-sick">병가 리포트 익명화</a></li>
+    </ol></div>
+  </nav>
+
+  <div class="part" style="padding-top:64px"><h2>운영 자동화</h2><p>매주 반복되던 결재·공지·안내를 자동으로 처리하되, 대외 발송 전에는 반드시 담당자가 확인하는 단계를 둡니다.</p></div>
+  <div class="sim" id="sim">
+    <div class="sim-head">
+      <div><h2>오늘의 인사 결재함</h2><div class="sub">평일 10시·16시 자동 실행 · 대기 8건</div><p class="how" style="margin:6px 0 0"><span class="kind real">실제 운영한 자동화</span>Claude Code로 만들어 실제로 운영했습니다. 결재 내용과 사람만 가상입니다.</p></div>
+      <div class="row" style="margin:0">
+        <button class="run" id="runBtn">자동처리 실행</button>
+        <button class="ghost" id="resetBtn" hidden>처음으로</button>
+      </div>
+    </div>
+    <ol class="docs" id="docs"></ol>
+    <div class="result" id="result">
+      <div>
+        <div class="tally">
+          <div class="ok"><b id="nOk">0</b><span>규정대로 자동 승인</span></div>
+          <div class="hold"><b id="nHold">0</b><span>담당자 확인으로 보류</span></div>
+        </div>
+        <p>보류 기준은 ‘규정만으로 결론이 나지 않는 경우’입니다. 서류 누락, 한도 초과, 중복 사용처럼 사람이 사정을 들어봐야 하는 건은 절대 자동으로 승인하지 않습니다.</p>
+      </div>
+      <div class="msg" aria-live="polite">
+        <div class="who"><div class="av">HR</div><b>hr_alert</b><span>#인사-알림 · 방금</span></div>
+        <div>오늘 10시 결재 자동처리 결과입니다.</div>
+        <ul id="holdList"></ul>
+        <div class="actions" id="msgActions">
+          <button class="primary" id="ackBtn">확인했어요, 보류 건 검토할게요</button>
+        </div>
+        <div class="done" id="ackDone" hidden>담당자 확인 완료. 보류 건은 담당자 결재함으로 옮겼습니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <section class="sys" id="d-master">
+    <div class="sys-head">
+      <h2>결재가 끝나면 인사 명부가 스스로 바뀝니다</h2>
+      <p>입사·전환·퇴사 결재가 승인되면 명부에 날짜를 적고, 퇴사자는 구분선 아래로 옮깁니다. 이미 값이 있는 칸은 절대 덮어쓰지 않고 담당자에게 알립니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>Claude Code로 만들어 실제로 운영했습니다. 화면의 사람과 날짜만 가상입니다.</p>
+    <div class="panel">
+      <div class="tbl-wrap"><table class="tbl" id="mTbl"></table></div>
+      <div class="row"><button class="run" id="mRun">오늘 승인된 결재 3건 반영</button><button class="ghost" id="mReset" hidden>처음으로</button></div>
+      <p class="small" id="mNote" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="sys" id="d-today">
+    <div class="sys-head">
+      <h2>오늘 올라온 인사 결재를 한 줄로</h2>
+      <p>매일 18시에 그룹웨어의 인사 결재를 종류별로 세어 채널에 올립니다. 낮에 궁금하면 명령어 한 줄로 바로 조회합니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>Slack 봇으로 실제 운영했습니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="label">채널에서 입력</div>
+        <div class="row" style="margin-top:0"><button class="run" id="tRun">/hr today</button></div>
+        <p class="small">실제로는 사직서·휴직·연차·특별휴가 지급·특별휴가 사용 다섯 종류를 셉니다.</p>
+      </div>
+      <div class="msg" aria-live="polite">
+        <div class="who"><div class="av">HR</div><b>hr_alert</b><span>#인사운영</span></div>
+        <div id="tOut">명령어를 입력하면 오늘 현황이 여기에 표시됩니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sys" id="d-onboard">
+    <div class="sys-head">
+      <h2>온보딩 공지는 초안까지만 자동으로</h2>
+      <p>입사 캘린더에서 명단을 읽어 공지 초안을 만들고, 팀장을 자동으로 멘션합니다. 공식/약식 여부는 사람이 고른 뒤에야 게시됩니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>실제로 운영했습니다. 공식/약식 선택과 게시는 담당자가 했습니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="label">다음 주 월요일 입사자 (입사 캘린더 기준)</div>
+        <ul class="list">
+          <li>정다온 <span>브랜드마케팅팀 · 경력</span></li>
+          <li>오세린 <span>퍼포먼스2팀 · 인턴</span></li>
+          <li>문지호 <span>데이터팀 · 경력</span></li>
+        </ul>
+        <div class="label" style="margin-top:18px">온보딩 형태 선택</div>
+        <div class="seg" id="obSeg" role="group" aria-label="온보딩 형태">
+          <button aria-pressed="false" data-type="공식">공식</button>
+          <button aria-pressed="false" data-type="약식">약식</button>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="who"><div class="av">HR</div><b>hr_alert</b><span>담당자에게만 보이는 초안</span></div>
+        <div id="obText">온보딩 형태를 고르면 공지 초안이 완성됩니다.</div>
+        <div class="actions"><button class="primary" id="obPost" disabled>채널에 게시</button></div>
+        <div class="done" id="obDone" hidden>#전사-공지에 게시했습니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sys" id="d-cal">
+    <div class="sys-head">
+      <h2>팀장 캘린더에 온보딩 일정을 대신 넣어 둡니다</h2>
+      <p>공지가 확정되면 신규 입사자의 팀장에게 온보딩 종료 후 인계 시간을 캘린더 초대로 보냅니다. 팀장이 바뀐 팀은 명부에서 다시 찾아 보냅니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>실제로 운영했습니다.</p>
+    <div class="panel">
+      <ul class="list" id="calList"></ul>
+      <div class="row"><button class="run" id="calRun">캘린더 초대 보내기</button></div>
+    </div>
+  </section>
+
+  <section class="sys" id="d-buddy">
+    <div class="sys-head">
+      <h2>버디는 규칙으로 추천하고, 수락은 본인이</h2>
+      <p>같은 팀이 아니면서 입사 6개월 이상, 최근 3개월 안에 버디를 맡지 않은 구성원 중에서 추천합니다. 본인이 수락해야 둘만의 대화방이 열립니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>실제로 운영했습니다. 추천 규칙은 단순화해서 보여 줍니다.</p>
+    <div class="panel">
+      <div class="pair">
+        <div class="person"><b>오세린</b><span>퍼포먼스2팀 · 신규 입사</span></div>
+        <div class="link" aria-hidden="true">+</div>
+        <div class="person" id="buddyCard"><b id="bName"></b><span id="bInfo"></span></div>
+      </div>
+      <ul class="reasons" id="bWhy"></ul>
+      <div class="row">
+        <button class="run" id="bAccept">버디가 수락함</button>
+        <button class="ghost" id="bDecline">거절함 · 다음 후보 추천</button>
+      </div>
+      <p class="small" id="bStatus" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="sys" id="d-edu">
+    <div class="sys-head">
+      <h2>법정의무교육은 미이수자에게만 개인 메시지로</h2>
+      <p>전체 공지를 반복하는 대신, 미이수자에게만 마감일과 남은 과목을 담아 개인 메시지를 보냅니다. 이수한 사람은 다음 독려 대상에서 자동으로 빠집니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>개인 메시지 발송은 실제로 자동화했습니다. 이수율 단계별 숫자는 가상이고 최종 94%만 실제 결과입니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="label">교육 이수율 (대상 320명)</div>
+        <div class="big"><span id="eduPct">41</span>%</div>
+        <div class="bar"><i id="eduBar"></i></div>
+        <div class="small" id="eduNote">전체 공지만 보낸 상태</div>
+        <div class="row">
+          <button class="run" id="eduBtn">미이수자에게 개인 독려 보내기</button>
+        </div>
+      </div>
+      <div class="msg">
+        <div class="who"><div class="av">HR</div><b>hr_alert</b><span>개인 메시지 예시</span></div>
+        <div>정다온님, 법정의무교육 마감이 <b>5일</b> 남았어요.<br>남은 과목: 직장 내 괴롭힘 예방, 개인정보 보호<br>교육장 바로가기 링크를 눌러 이어서 들으시면 됩니다.</div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="sys" id="d-bonus">
+    <div class="sys-head">
+      <h2>계약금 지급과 만기는 사람이 기억하지 않아도 됩니다</h2>
+      <p>매월 신규 지급 대상과 두 달 안에 만기가 오는 계약을 찾아 초안을 올립니다. 담당자가 ✅를 누르기 전에는 아무에게도 보내지 않습니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>실제로 운영했습니다. ✅ 승인 전에는 발송되지 않는 구조도 실제와 같습니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="label">이번 달 확인 대상</div>
+        <ul class="list">
+          <li>신규 지급 <span>하유진 · 퍼포먼스1팀 · 지급일 30일</span></li>
+          <li>신규 지급 <span>권태민 · 세일즈팀 · 지급일 30일</span></li>
+          <li>만기 도래 <span>남궁윤 · 데이터팀 · 다음 달 말</span></li>
+        </ul>
+      </div>
+      <div class="msg" aria-live="polite">
+        <div class="who"><div class="av">HR</div><b>hr_alert</b><span>#인사-알림 · 초안</span></div>
+        <div>이번 달 계약금 안내 초안 3건입니다. 내용을 확인하고 ✅를 눌러 주세요. 승인 후 대상자와 소속 부문장에게 발송합니다.</div>
+        <div class="actions"><button class="primary" id="bnOk">✅ 확인했어요</button></div>
+        <div class="done" id="bnDone" hidden>3건 발송 완료. 다음 확인은 다음 달 첫 평일입니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sys" id="d-tax">
+    <div class="sys-head">
+      <h2>감면 대상자에게만, 한 번만 안내합니다</h2>
+      <p>시트에서 대상 여부만 표시하고 메뉴를 누르면 개인 메시지로 안내하고 발송 기록을 남깁니다. 이미 보낸 사람은 다시 실행해도 건너뜁니다.</p>
+    </div>
+    <p class="how"><span class="kind real">실제 운영한 자동화</span>실제로 운영했습니다.</p>
+    <div class="panel">
+      <div class="tbl-wrap"><table class="tbl" id="taxTbl"></table></div>
+      <div class="row"><button class="run" id="taxRun">감면 안내 발송</button></div>
+      <p class="small" id="taxNote" aria-live="polite"></p>
+    </div>
+  </section>
+
+
+  <div class="part"><h2>채용</h2><p>연간 채용이 세 배 가까이 늘어나는 동안 써 온 기준과 분석입니다. 자동화가 아니라 사람이 판단하는 업무를 일관되게 만든 방법을 보여 줍니다.</p></div>
+
+  <section class="sys" id="d-iv">
+    <div class="sys-head">
+      <h2>이력서를 읽고, 이 사람에게만 할 질문을 준비합니다</h2>
+      <p>지원자의 경력 흐름과 직무 요건을 대조해 확인이 필요한 지점을 질문으로 바꾸고, 면접 시간에 맞춰 영역별로 나눈 질문지 형식입니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 Claude와 함께 지원자별 질문지를 준비해 면접관과 공유했습니다. 이력서를 넣으면 자동으로 만들어지는 시스템은 아닙니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="label">지원자 (가상)</div>
+        <div class="person"><b>한지수</b><span>HR 운영 매니저 지원 · 총 경력 4년</span>
+          <div class="chips"><span>스타트업 인사팀 2년 8개월</span><span>직전 회사 6개월 근무</span><span>급여 300명 단독 운영</span><span>노무 자문 경험 없음</span></div>
+        </div>
+        <div class="label" style="margin-top:16px">면접 시간</div>
+        <div class="seg" id="ivSeg" role="group" aria-label="면접 시간">
+          <button aria-pressed="false" data-m="30">30분</button>
+          <button aria-pressed="true" data-m="60">60분</button>
+        </div>
+        <div class="row"><button class="run" id="ivRun">질문지 만들기</button></div>
+      </div>
+      <div class="qsheet" id="ivOut" aria-live="polite"><span class="small">버튼을 누르면 질문지가 여기에 만들어집니다.</span></div>
+    </div>
+  </section>
+
+  <section class="sys" id="d-src">
+    <div class="sys-head">
+      <h2>스카우트 메시지는 그 사람의 이력으로 시작합니다</h2>
+      <p>후보자의 공개 이력에서 눈에 띄는 경험으로 첫 문장을 시작하는 방식입니다. 보내기 전 담당자가 반드시 다듬습니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 후보자마다 메시지를 직접 다듬어 보냈습니다. 이 화면은 개인화하는 방식만 보여 줍니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="label">후보자를 고르세요 (가상)</div>
+        <div class="seg" id="srcSeg" role="group" aria-label="후보자">
+          <button aria-pressed="true" data-i="0">퍼포먼스 마케터</button>
+          <button aria-pressed="false" data-i="1">데이터 분석가</button>
+        </div>
+        <ul class="list" id="srcInfo" style="margin-top:14px"></ul>
+      </div>
+      <div class="msg">
+        <div class="who"><div class="av">HR</div><b>초안</b><span>채용 담당자 검토 전</span></div>
+        <div id="srcMsg"></div>
+        <label class="small" style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="srcChk"> 내용을 확인하고 다듬었습니다</label>
+        <div class="actions"><button class="primary" id="srcSend" disabled>발송</button></div>
+        <div class="done" id="srcDone" hidden>발송했습니다. 답장이 오면 채용 채널에 알려 드립니다.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sys" id="d-funnel">
+    <div class="sys-head">
+      <h2>어디서 사람이 빠지는지 단계별로 봅니다</h2>
+      <p>경력 채용 퍼널을 지원 경로별로 나눠 보면 같은 공고라도 전환율이 크게 다릅니다. 실제로 이 분석으로 중단됐던 사외추천 장려금을 다시 열었습니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 시트로 퍼널을 집계·분석했고, 그 결과로 사외추천 장려금을 다시 열었습니다. 숫자는 가상입니다.</p>
+    <div class="panel">
+      <div class="seg" id="fnSeg" role="group" aria-label="지원 경로">
+        <button aria-pressed="true" data-k="all">전체</button>
+        <button aria-pressed="false" data-k="job">채용 플랫폼</button>
+        <button aria-pressed="false" data-k="ref">사내외 추천</button>
+      </div>
+      <div class="funnel" id="fnOut" style="margin-top:18px"></div>
+      <p class="small" id="fnNote" style="margin-top:12px"></p>
+    </div>
+  </section>
+
+  <section class="sys" id="d-offer">
+    <div class="sys-head">
+      <h2>오퍼는 기준표로 설계하고, 수락까지 관리합니다</h2>
+      <p>직군·레벨별 연봉 밴드와 ‘면접 평점별 인상률’ 기준을 만들어, 제안 연봉이 사람마다 흔들리지 않게 했습니다. 연봉이 밴드보다 낮거나 높은 지원자는 비율 대신 밴드 기준으로 예외 처리합니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 이 기준표를 보고 담당자가 제안 금액을 산정해 경영진 승인을 받았습니다. 이 기준을 도구로 옮겨 본 <a href="offer.html">오퍼 설계 도구 프로토타입</a>도 있습니다.</p>
+    <div class="panel">
+      <div class="two">
+        <div class="form">
+          <label>지원자<input id="ofName" value="송유리"></label>
+          <label>직군<select id="ofJob"><option value="ae" selected>퍼포먼스 마케터</option><option value="design">디자이너</option><option value="global">글로벌 마케터</option></select></label>
+          <label>레벨<select id="ofLv"><option>LV1</option><option selected>LV2</option><option>LV3</option></select></label>
+          <label>현재 연봉(만 원)<input id="ofCur" type="number" step="50" value="4600"></label>
+          <label>면접 평점(5점)<input id="ofScore" type="number" step="0.1" min="3" max="5" value="4.3"></label>
+          <label>희망 연봉(만 원)<input id="ofWant" type="number" step="50" value="5600"></label>
+        </div>
+        <div class="msg" aria-live="polite">
+          <div class="who"><div class="av">HR</div><b>오퍼 승인 요청</b><span>#채용-리더 · 초안</span></div>
+          <div id="ofOut"></div>
+        </div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:20px"><table class="tbl" id="ofRule"></table></div>
+      <div class="label" style="margin-top:20px">오퍼를 거절하려 할 때 (철회 사유별 대응)</div>
+      <ul class="list">
+        <li>처우가 아쉽다 <span>반기 성과급·레벨 승급 경로 설명, 필요하면 웰컴보너스. 기본 연봉 재조정은 내부 형평 때문에 지양</span></li>
+        <li>직무·역할이 고민된다 <span>합류할 팀 리드와 커피챗, 필요하면 대표 통화</span></li>
+        <li>다른 회사와 고민 중이다 <span>오퍼 메일 직후 전화로 성장·동료·복지 설명, 시니어는 경영진이 한 번 더 연락</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="part"><h2>보상·평가 도구</h2><p>보상안을 숫자로 비교하고 결정한 방식, 그리고 평가 흐름을 시스템으로 옮겨 보려고 만든 프로토타입입니다.</p></div>
+
+  <section class="sys" id="d-sim">
+    <div class="sys-head">
+      <h2>초봉을 올리면 누가, 얼마나 영향을 받나 따져 본 방식</h2>
+      <p>인턴 급여와 신입 초봉을 바꿀 때 연봉 역전을 막기 위해 조정해야 할 인원과 총인건비 증가율을 함께 봤습니다. 슬라이더로 그 관계를 확인할 수 있습니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 여러 시나리오를 시트로 비교하고 팀 검토와 경영진 보고를 거쳐 제안안을 정했습니다. 이 화면은 계산 원리만 보여 줍니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="slider"><label for="sIntern">인턴 월급 <b id="vIntern"></b></label><input type="range" id="sIntern" min="240" max="280" step="10" value="250"></div>
+        <div class="slider"><label for="sNew">신입 초봉 <b id="vNew"></b></label><input type="range" id="sNew" min="3700" max="5000" step="50" value="4000"></div>
+        <p class="small">가상 회사 기준: 1년차 레벨 140명, 연간 인턴 60명(6개월), 현재 총인건비 200억 원</p>
+      </div>
+      <div>
+        <div class="kv">
+          <div><b id="oAdj"></b><span>연봉 조정 대상</span></div>
+          <div><b id="oCost"></b><span>추가 비용(연)</span></div>
+          <div><b id="oPct"></b><span>총인건비 증가율</span></div>
+        </div>
+        <p class="small" id="oMsg" style="margin-top:12px"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sys" id="d-ps">
+    <div class="sys-head">
+      <h2>성과급은 레벨·평가·연봉 위치로 정해집니다</h2>
+      <p>같은 평가라도 레벨 밴드 안에서 연봉이 낮은 사람에게 더 주도록 설계했습니다. 조직장이 바꿀 수 있는 범위도 표에서 정합니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 성과급 산정 가이드 문서와 시트로 운영했습니다. 비율은 가상입니다.</p>
+    <div class="panel">
+      <div class="picks">
+        <label>레벨 <select id="psLv"><option>LV1</option><option selected>LV2</option><option>LV3</option><option>LV4</option></select></label>
+        <label>평가 <select id="psGr"><option>S</option><option selected>A</option><option>B</option><option>C</option><option>D</option></select></label>
+        <label>밴드 내 위치 <select id="psCr"><option value="0">하단 (90% 미만)</option><option value="1" selected>중간 (90~110%)</option><option value="2">상단 (110% 초과)</option></select></label>
+      </div>
+      <div class="tbl-wrap"><table class="matrix" id="psTbl"></table></div>
+      <p style="margin:14px 0 0">기준 연봉 대비 성과급 <b id="psOut" style="font-family:var(--display);font-size:24px"></b></p>
+    </div>
+  </section>
+
+  <section class="sys" id="d-eval">
+    <div class="sys-head">
+      <h2>평가부터 보상 결정까지 한 화면에서</h2>
+      <p>엑셀과 메일로 오가던 반기 평가를 단계별 화면으로 옮긴 프로토타입입니다. 단계를 눌러 각자 무엇을 보는지 확인해 보세요.</p>
+    </div>
+    <p class="how"><span class="kind proto">프로토타입</span>실제로 만든 웹 프로토타입을 단순화한 화면입니다. 정식 시스템으로 도입되지는 않았습니다.</p>
+    <div class="panel">
+      <div class="steps" id="evSteps" role="tablist" aria-label="평가 단계"></div>
+      <div class="screen" id="evScreen" role="tabpanel"></div>
+    </div>
+  </section>
+
+  <div class="part"><h2>데이터 분석</h2><p>제도를 바꾸기 전에 숫자로 설득하고, 바꾼 뒤에는 효과를 같은 기준으로 다시 잽니다.</p></div>
+
+  <section class="sys" id="d-leave">
+    <div class="sys-head">
+      <h2>휴가 제도를 바꾼 뒤, 같은 달끼리 비교</h2>
+      <p>개편 전후를 월별 누적 휴가 사용률로 비교합니다. 입사·퇴사로 인원이 달라져도 비교가 흔들리지 않게 인당 기준으로 계산합니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 분석 시트로 전후를 비교했습니다. 월별 숫자는 가상입니다.</p>
+    <div class="panel">
+      <div class="seg" id="lvSeg" role="group" aria-label="연도 선택">
+        <button aria-pressed="true" data-y="before">개편 전 해</button>
+        <button aria-pressed="false" data-y="after">개편 후 해</button>
+      </div>
+      <div class="bars" id="lvBars" aria-label="월별 누적 휴가 사용률"></div>
+      <p class="small" id="lvNote"></p>
+    </div>
+  </section>
+
+  <section class="sys" id="d-sick">
+    <div class="sys-head">
+      <h2>병가 현황은 팀 단위로만 보고합니다</h2>
+      <p>경영진 보고용 자료에서는 이름과 진단명을 지우고 팀별 건수만 남깁니다. 원본은 인사팀만 봅니다.</p>
+    </div>
+    <p class="how"><span class="kind recon">업무 기준·분석 재현</span>실제로는 원본 시트를 정리해 팀 단위 보고서를 만들었습니다.</p>
+    <div class="panel two">
+      <div>
+        <div class="label">인사팀 원본 (가명)</div>
+        <div class="tbl-wrap"><table class="tbl" id="skRaw"></table></div>
+      </div>
+      <div>
+        <div class="label">경영진 보고용</div>
+        <div class="tbl-wrap"><table class="tbl" id="skAgg"></table></div>
+        <div class="row"><button class="run" id="skRun">익명화해서 보고서 만들기</button></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="line"><span>실제 운영 결과: 특별휴가 결재 77% 자동 승인 · 법정교육 수료율 94% (매드업, 2025–2026)</span><a href="index.html">포트폴리오로 돌아가기</a></div>
+  </footer>
+</div>
+
+<script>
+const DOCS=[
+  {t:"특별휴가 · 결혼",m:"김하늘 · 퍼포먼스1팀",ok:true,why:"청첩장 첨부, 5일 이내 신청"},
+  {t:"퇴사 신청",m:"이도윤 · 데이터팀",ok:true,why:"인수인계서 첨부, 30일 전 신청"},
+  {t:"건강검진 공가",m:"박서준 · 재무팀",ok:false,why:"올해 이미 사용함 · 연 1회 한도"},
+  {t:"휴가 미사용 수당",m:"최유나 · 브랜드마케팅팀",ok:true,why:"잔여 연차 3일, 신청 2일"},
+  {t:"버디 활동비",m:"한지민 · 퍼포먼스2팀",ok:false,why:"8만 원 청구 · 1회 한도 5만 원 초과"},
+  {t:"특별휴가 · 조부모상",m:"윤태오 · 세일즈팀",ok:false,why:"증빙 서류 미첨부"},
+  {t:"소득세 감면 신청",m:"정다온 · 브랜드마케팅팀",ok:true,why:"만 29세, 감면 요건 충족"},
+  {t:"특별휴가 · 출산(배우자)",m:"서민재 · 개발팀",ok:true,why:"출생증명서 첨부, 기한 내 신청"},
+];
+const $=s=>document.querySelector(s);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const docsEl=$('#docs');
+function renderDocs(){
+  docsEl.innerHTML=DOCS.map((d,i)=>`<li class="doc" id="d${i}"><div><div class="t">${d.t}</div><div class="m">${d.m}</div></div><div class="why"></div><span class="badge">대기</span></li>`).join('');
+}
+renderDocs();
+const wait=ms=>new Promise(r=>setTimeout(r,reduce?0:ms));
+$('#runBtn').addEventListener('click',async e=>{
+  e.target.disabled=true;e.target.textContent='판정 중…';
+  let ok=0,hold=0;
+  for(let i=0;i<DOCS.length;i++){
+    const el=$('#d'+i),d=DOCS[i];
+    el.classList.add('checking');el.querySelector('.badge').textContent='확인 중';
+    await wait(420);
+    el.classList.remove('checking');el.classList.add(d.ok?'ok':'hold');
+    el.querySelector('.badge').textContent=d.ok?'승인':'보류';
+    el.querySelector('.why').textContent=d.why;
+    d.ok?ok++:hold++;
+  }
+  $('#nOk').textContent=ok;$('#nHold').textContent=hold;
+  $('#holdList').innerHTML=`<li>자동 승인 ${ok}건</li>`+DOCS.filter(d=>!d.ok).map(d=>`<li>보류: ${d.t} (${d.m.split(' · ')[0]}) – ${d.why}</li>`).join('');
+  $('#result').classList.add('show');
+  e.target.textContent='처리 완료';$('#resetBtn').hidden=false;
+});
+$('#resetBtn').addEventListener('click',()=>{
+  renderDocs();$('#result').classList.remove('show');
+  const b=$('#runBtn');b.disabled=false;b.textContent='자동처리 실행';$('#resetBtn').hidden=true;
+  $('#ackBtn').parentElement.hidden=false;$('#ackDone').hidden=true;
+});
+$('#ackBtn').addEventListener('click',()=>{$('#msgActions').hidden=true;$('#ackDone').hidden=false});
+
+// onboarding
+document.querySelectorAll('#obSeg button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#obSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  const t=b.dataset.type;
+  const sched=t==='공식'?'10:00 회사·제도 소개<br>11:00 핵심가치 세션<br>12:00 점심<br>14:00 업무 시스템 안내 후 팀 인계':'10:00 회사·제도 안내 후 팀 인계';
+  $('#obText').innerHTML=`<b>[${t} 온보딩]</b> 다음 주 월요일 온보딩은 ${t}으로 진행합니다.<br><br>1. 정다온님: 브랜드마케팅팀 / 경력 / @팀장 강유진<br>2. 오세린님: 퍼포먼스2팀 / 인턴 / @팀장 노승현<br>3. 문지호님: 데이터팀 / 경력 / @팀장 백소희<br><br>${sched}`;
+  $('#obPost').disabled=false;$('#obDone').hidden=true;$('#obPost').parentElement.hidden=false;
+}));
+$('#obPost').addEventListener('click',()=>{$('#obPost').parentElement.hidden=true;$('#obDone').hidden=false});
+
+// buddy
+const BUD=[
+  {n:"이수아",i:"브랜드마케팅팀 · 입사 2년",w:["다른 팀이라 업무 밖 이야기를 나누기 좋음","입사 6개월 이상","최근 3개월 버디 경험 없음"]},
+  {n:"장현우",i:"데이터팀 · 입사 1년 4개월",w:["다른 팀, 같은 층 근무","입사 6개월 이상","최근 3개월 버디 경험 없음"]},
+  {n:"김나래",i:"세일즈팀 · 입사 3년",w:["다른 팀","입사 6개월 이상","작년 버디 만족도 상위"]},
+];
+let bi=0;
+function showBud(){const b=BUD[bi%BUD.length];$('#bName').textContent=b.n;$('#bInfo').textContent=b.i;$('#bWhy').innerHTML=b.w.map(x=>`<li>${x}</li>`).join('');}
+showBud();
+$('#bAccept').addEventListener('click',()=>{$('#bStatus').textContent=`${BUD[bi%BUD.length].n}님이 수락했습니다. 두 사람만 있는 대화방을 열고, 활동비 5만 원을 배정했습니다.`});
+$('#bDecline').addEventListener('click',()=>{const prev=BUD[bi%BUD.length].n;bi++;showBud();$('#bStatus').textContent=`${prev}님이 거절해 다음 후보를 추천했습니다.`});
+
+// education
+const steps=[[41,'전체 공지만 보낸 상태'],[68,'1차 개인 독려 후'],[86,'2차 개인 독려 후 (마감 3일 전)'],[94,'마감일 기준 최종 이수율']];
+let si=0;
+function edu(){const [p,n]=steps[si];$('#eduPct').textContent=p;$('#eduBar').style.width=p+'%';$('#eduNote').textContent=n;
+  const b=$('#eduBtn');if(si===steps.length-1){b.textContent='다시 보기';}else{b.textContent=si===0?'미이수자에게 개인 독려 보내기':'다음 독려 보내기';}}
+requestAnimationFrame(edu);
+$('#eduBtn').addEventListener('click',()=>{si=si===steps.length-1?0:si+1;edu();});
+
+// master sheet
+const M0=[{n:'김하늘',t:'퍼포먼스1팀',s:'재직',in:'2024-03-04',cv:'',out:''},{n:'오세린',t:'퍼포먼스2팀',s:'인턴',in:'2026-09-01',cv:'',out:''},{n:'이도윤',t:'데이터팀',s:'퇴사예정',in:'2023-07-03',cv:'',out:''},{n:'박서준',t:'재무팀',s:'재직',in:'2022-11-14',cv:'2023-02-14',out:''}];
+let M=JSON.parse(JSON.stringify(M0)),mDone=false;
+function mRender(newName){
+  const head='<tr><th>이름</th><th>팀</th><th>상태</th><th>입사일</th><th>정규직 전환일</th><th>퇴사일</th></tr>';
+  const act=M.filter(r=>r.s!=='퇴직'),gone=M.filter(r=>r.s==='퇴직');
+  const row=r=>`<tr class="${r.n===newName?'new':''}${r.s==='퇴직'?' moved':''}"><td>${r.n}</td><td>${r.t}</td><td>${r.s}</td><td>${r.in}</td><td class="${r._cv?'filled':''}">${r.cv||'–'}</td><td class="${r._out?'filled':''}">${r.out||'–'}</td></tr>`;
+  $('#mTbl').innerHTML=head+act.map(row).join('')+'<tr class="sep"><td colspan="6">재직자 / 퇴사자 구분선</td></tr>'+gone.map(row).join('');
+}
+mRender();
+$('#mRun').addEventListener('click',()=>{
+  if(mDone)return;mDone=true;
+  M.push({n:'정다온',t:'브랜드마케팅팀',s:'재직',in:'2026-11-16',cv:'',out:''});
+  const o=M.find(r=>r.n==='오세린');o.cv='2026-11-16';o._cv=1;o.s='재직';
+  const d=M.find(r=>r.n==='이도윤');d.out='2026-11-13';d._out=1;d.s='퇴직';
+  const p=M.find(r=>r.n==='박서준');
+  mRender('정다온');
+  $('#mNote').textContent='반영: 정다온 입사 행 추가 · 오세린 정규직 전환일 기록 · 이도윤 퇴사일 기록 후 구분선 아래로 이동. 박서준님 전환일은 이미 값이 있어 그대로 두었습니다.';
+  $('#mRun').disabled=true;$('#mReset').hidden=false;
+});
+$('#mReset').addEventListener('click',()=>{M=JSON.parse(JSON.stringify(M0));mDone=false;mRender();$('#mNote').textContent='';$('#mRun').disabled=false;$('#mReset').hidden=true;});
+
+// hr today
+$('#tRun').addEventListener('click',()=>{
+  const c=[['연차',14],['특별휴가 지급',6],['특별휴가 사용',4],['사직서',1],['휴직',0]];
+  $('#tOut').innerHTML='<b>오늘 인사 결재 현황</b> (18:00 기준)<ul>'+c.map(([k,v])=>`<li>${k} ${v}건</li>`).join('')+'</ul>합계 25건 · 사직서 1건은 담당자 확인이 필요합니다.';
+});
+
+// calendar invites
+const CAL=[['정다온','브랜드마케팅팀','강유진 팀장'],['오세린','퍼포먼스2팀','노승현 팀장'],['문지호','데이터팀','백소희 팀장']];
+function calRender(sent){$('#calList').innerHTML=CAL.map(([a,b,c])=>`<li>${a} <span>${b} · ${c} · ${sent?'월 14:30 인계 일정 초대 발송':'초대 대기'}</span></li>`).join('');}
+calRender(false);
+$('#calRun').addEventListener('click',e=>{calRender(true);e.target.disabled=true;e.target.textContent='3명에게 발송 완료';});
+
+// contract bonus
+$('#bnOk').addEventListener('click',()=>{$('#bnOk').parentElement.hidden=true;$('#bnDone').hidden=false;});
+
+// tax
+const TX=[['정다온','만 29세','Y','O'],['문지호','만 33세','Y',''],['오세린','만 24세','Y',''],['서민재','만 36세','N','']];
+function taxRender(){$('#taxTbl').innerHTML='<tr><th>이름</th><th>나이</th><th>대상 여부</th><th>안내 발송</th></tr>'+TX.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="${r[4]?'filled':''}">${r[3]||'–'}</td></tr>`).join('');}
+taxRender();
+$('#taxRun').addEventListener('click',()=>{
+  let sent=0,skip=0;
+  TX.forEach(r=>{if(r[2]!=='Y')return; if(r[3]==='O'){skip++;return;} r[3]='O';r[4]=1;sent++;});
+  taxRender();
+  $('#taxNote').textContent=sent?`${sent}명에게 안내했습니다. 이미 안내한 ${skip}명은 건너뛰었습니다.`:'새로 안내할 사람이 없습니다. 이미 보낸 사람은 다시 보내지 않습니다.';
+});
+
+// comp simulator (fictional cohort)
+const LV1=[];let seed=7;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};
+for(let i=0;i<140;i++)LV1.push(Math.round((3600+rnd()*1500)/10)*10);
+const BASE=200e8;
+function sim(){
+  const ip=+$('#sIntern').value,np=+$('#sNew').value;
+  $('#vIntern').textContent=ip+'만 원';$('#vNew').textContent=np.toLocaleString()+'만 원';
+  let adj=0,gap=0;LV1.forEach(v=>{if(v<np){adj++;gap+=np-v;}});
+  const intern=Math.max(0,ip-240)*60*6;
+  const cost=(gap+intern)*1e4;
+  $('#oAdj').textContent=adj+'명';
+  $('#oCost').textContent=(cost/1e8).toFixed(1)+'억';
+  const pct=cost/BASE*100;$('#oPct').textContent='+'+pct.toFixed(1)+'%';
+  $('#oMsg').textContent=adj>LV1.length*0.6?'1년차 대부분이 조정 대상이 됩니다. 근속·평가 차이가 사라지는 연봉 압축이 생깁니다.':pct<1.5?'비용 부담이 작은 구간입니다. 시장 경쟁력이 충분한지 함께 확인하세요.':'경쟁력과 비용의 균형 구간입니다.';
+}
+['sIntern','sNew'].forEach(id=>$('#'+id).addEventListener('input',sim));sim();
+
+// performance pay matrix
+const GR=['S','A','B','C','D'],LVS=['LV1','LV2','LV3','LV4'];
+const BASEP={S:20,A:14,B:8,C:3,D:0},LVADD={LV1:0,LV2:2,LV3:4,LV4:6},CRADJ=[1.2,1,0.8];
+function ps(){
+  const lv=$('#psLv').value,gr=$('#psGr').value,cr=+$('#psCr').value;
+  const val=(g,c)=>Math.round((BASEP[g]+ (BASEP[g]?LVADD[lv]:0))*CRADJ[c]);
+  let h='<tr><th>평가 \\ 밴드 위치</th><th>하단</th><th>중간</th><th>상단</th></tr>';
+  GR.forEach(g=>{h+=`<tr><th>${g}</th>`+[0,1,2].map(c=>`<td class="${g===gr&&c===cr?'on':''}">${val(g,c)}%</td>`).join('')+'</tr>';});
+  $('#psTbl').innerHTML=h;$('#psOut').textContent=val(gr,cr)+'%';
+}
+['psLv','psGr','psCr'].forEach(id=>$('#'+id).addEventListener('change',ps));ps();
+
+// evaluation flow
+const EV=[
+ ['셀프평가','구성원','<h3>정다온님의 셀프평가</h3>상반기 목표 3개 중 2개 달성. 신규 광고주 2곳 온보딩을 주도했습니다.<br>스스로 매긴 기여 등급: <b>A</b>'],
+ ['조직장 평가','조직장','<h3>강유진 팀장의 평가</h3>셀프평가와 성과 근거를 나란히 보고 등급을 정합니다.<br>조직장 등급: <b>A</b> · 코멘트: 신규 광고주 안착 기여가 큼'],
+ ['캘리브레이션','본부장·HR','<h3>본부 캘리브레이션</h3>팀별 등급 분포를 한 화면에서 비교합니다. S 비율이 기준을 넘는 팀은 표시됩니다.<br>브랜드마케팅팀: S 1 · A 4 · B 6 · C 1'],
+ ['보상 확정','HR','<h3>보상 확정</h3>확정 등급과 밴드 위치로 성과급을 계산하고, 면담용 통지서를 만듭니다.<br>정다온님: LV2 · A · 밴드 중간 → 기준 연봉의 <b>16%</b>'],
+];
+let ev=0;
+function evRender(){
+  $('#evSteps').innerHTML=EV.map((e,i)=>`<button role="tab" ${i===ev?'aria-current="step" aria-selected="true"':'aria-selected="false"'} data-i="${i}">${i+1}. ${e[0]}</button>`).join('');
+  $('#evScreen').innerHTML=`<div class="small" style="margin-bottom:6px">보는 사람: ${EV[ev][1]}</div>`+EV[ev][2];
+  document.querySelectorAll('#evSteps button').forEach(b=>b.addEventListener('click',()=>{ev=+b.dataset.i;evRender();}));
+}
+evRender();
+
+// leave YoY
+const LV={before:[4,9,15,21,27,33,38,42,47,52,58,64],after:[6,13,22,31,40,49,56,61,67,74,82,89]};
+const MON=['1','2','3','4','5','6','7','8','9','10','11','12'];
+function lvRender(y){
+  $('#lvBars').innerHTML=LV[y].map((v,i)=>`<div><em>${v}</em><i class="cur" style="height:${v}%"></i>${MON[i]}월</div>`).join('');
+  $('#lvNote').textContent=y==='before'?'개편 전 해: 연말 누적 사용률 64%. 하반기에 몰아서 쓰는 패턴.':'개편 후 해: 연말 누적 사용률 89%. 샌드위치데이·시즌 휴가로 상반기부터 고르게 사용.';
+}
+document.querySelectorAll('#lvSeg button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#lvSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));lvRender(b.dataset.y);}));
+lvRender('before');
+
+// sick leave anonymization
+const SK=[['김○○','퍼포먼스1팀','장염',2],['이○○','퍼포먼스1팀','독감',3],['박○○','데이터팀','허리 통증',3],['최○○','세일즈팀','수술 후 회복',5],['정○○','퍼포먼스1팀','독감',2]];
+$('#skRaw').innerHTML='<tr><th>이름</th><th>팀</th><th>사유</th><th>일수</th></tr>'+SK.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+$('#skAgg').innerHTML='<tr><td class="mask">버튼을 누르면 팀별 집계가 만들어집니다.</td></tr>';
+$('#skRun').addEventListener('click',e=>{
+  const g={};SK.forEach(r=>{g[r[1]]=g[r[1]]||{c:0,d:0};g[r[1]].c++;g[r[1]].d+=r[3];});
+  $('#skAgg').innerHTML='<tr><th>팀</th><th>건수</th><th>총 일수</th></tr>'+Object.entries(g).map(([t,v])=>`<tr><td>${t}</td><td>${v.c}</td><td>${v.d}</td></tr>`).join('');
+  e.target.disabled=true;e.target.textContent='이름·사유 제외 완료';
+});
+
+// interview sheet
+let ivMin=60;
+document.querySelectorAll('#ivSeg button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#ivSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));ivMin=+b.dataset.m;if($('#ivOut').dataset.made)ivMake();}));
+function ivMake(){
+  const long=ivMin===60;
+  const sec=[
+    ['지원 동기·이직 사유',long?10:5,['직전 회사를 6개월 만에 떠나는 이유와, 그때 알았다면 다르게 선택했을 점은?','다음 회사를 고를 때 가장 중요하게 보는 기준은?']],
+    ['핵심 직무: 급여·인사 운영',long?25:15,['300명 급여를 혼자 운영할 때 마감일 기준 일정을 순서대로 설명해 주세요.','급여 오류가 났던 경험과 재발 방지책은?'].concat(long?['외부 급여 대행사와 일한다면 무엇을 어떤 방식으로 검증하시겠어요?']:[])],
+    ['확인이 필요한 영역',long?15:7,['노무 자문 경험이 없는데, 근로시간·휴가 이슈를 판단해야 할 때 어떻게 접근하나요?'].concat(long?['스스로 규정을 찾아 해결했던 사례가 있나요?']:[])],
+    ['조직 적합·마무리',long?10:3,['함께 일하기 어려웠던 동료와 어떻게 일했나요?'].concat(long?['궁금한 점이 있으면 질문해 주세요.']:[])],
+  ];
+  $('#ivOut').innerHTML=`<div class="small">한지수 · HR 운영 매니저 · ${ivMin}분 면접</div>`+sec.map(([t,m,q])=>`<h3>${t} (${m}분)</h3><ol>${q.map(x=>`<li>${x}<span class="memo"></span></li>`).join('')}</ol>`).join('');
+  $('#ivOut').dataset.made=1;
+}
+$('#ivRun').addEventListener('click',ivMake);
+
+// sourcing
+const SRC=[
+  {info:[['현재','뷰티 브랜드 퍼포먼스 PM · 4년'],['눈에 띄는 경험','글로벌 브랜드 3곳 캠페인 리드'],['매체','Google · Meta · TikTok']],
+   msg:'안녕하세요, 이서연님. 라이트하우스에서 채용을 담당하고 있습니다.<br><br>뷰티 브랜드 세 곳의 글로벌 캠페인을 PM으로 이끌어 오신 이력을 보고 연락드립니다. 저희가 올해 새로 맡은 해외 뷰티 계정에서 바로 그 경험이 필요합니다.<br><br>부담 없이 20분 정도 커피챗으로 이야기 나눠 보실 수 있을까요?'},
+  {info:[['현재','커머스 데이터 분석가 · 3년'],['눈에 띄는 경험','추천 알고리즘 A/B 테스트 설계'],['도구','SQL · Python · Looker']],
+   msg:'안녕하세요, 김도현님. 라이트하우스 채용 담당입니다.<br><br>커머스에서 추천 알고리즘 A/B 테스트를 설계해 오신 경험이 인상 깊었습니다. 저희 광고 성과 분석팀이 실험 설계를 체계화하려는 시점이라 꼭 한번 이야기 나누고 싶습니다.<br><br>편하신 시간에 20분 정도 통화 가능하실까요?'}];
+let srcI=0;
+function srcRender(){const c=SRC[srcI];$('#srcInfo').innerHTML=c.info.map(([k,v])=>`<li>${k} <span>${v}</span></li>`).join('');$('#srcMsg').innerHTML=c.msg;$('#srcChk').checked=false;$('#srcSend').disabled=true;$('#srcSend').parentElement.hidden=false;$('#srcDone').hidden=true;}
+document.querySelectorAll('#srcSeg button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#srcSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));srcI=+b.dataset.i;srcRender();}));
+$('#srcChk').addEventListener('change',e=>{$('#srcSend').disabled=!e.target.checked;});
+$('#srcSend').addEventListener('click',()=>{$('#srcSend').parentElement.hidden=true;$('#srcDone').hidden=false;});
+srcRender();
+
+// funnel
+const FN={all:[['지원',900],['서류 합격',180],['1차 면접',95],['2차 면접',52],['오퍼',34],['입사',27]],
+          job:[['지원',780],['서류 합격',130],['1차 면접',62],['2차 면접',31],['오퍼',19],['입사',14]],
+          ref:[['지원',120],['서류 합격',50],['1차 면접',33],['2차 면접',21],['오퍼',15],['입사',13]]};
+function fnRender(k){
+  const d=FN[k],top=d[0][1];let worst=1,wi=1;
+  for(let i=1;i<d.length;i++){const r=d[i][1]/d[i-1][1];if(r<worst){worst=r;wi=i;}}
+  $('#fnOut').innerHTML=d.map(([n,v],i)=>`<div class="f ${i===wi?'low':''}"><span>${n}</span><i style="width:${Math.max(2,v/top*100)}%"></i><b>${v}명${i?` · ${Math.round(v/d[i-1][1]*100)}%`:''}</b></div>`).join('');
+  const conv=(d[d.length-1][1]/top*100).toFixed(1);
+  $('#fnNote').textContent=k==='ref'?`추천 경로는 지원 대비 입사 ${conv}%로, 플랫폼 경로보다 약 6배 높습니다. 장려금을 다시 열 근거가 됐습니다.`:`지원 대비 입사 ${conv}%. 가장 많이 빠지는 단계는 '${d[wi][0]}'(이전 단계 대비 ${Math.round(worst*100)}%)입니다.`;
+}
+document.querySelectorAll('#fnSeg button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#fnSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));fnRender(b.dataset.k);}));
+fnRender('all');
+
+// offer (fictional bands; rules mirror the real offer standard)
+const BANDS={ae:{LV1:[3700,4300],LV2:[4400,5500],LV3:[5600,7000]},design:{LV1:[3600,4200],LV2:[4300,5600],LV3:[5700,7400]},global:{LV1:[3900,4600],LV2:[4700,5900],LV3:[6000,7600]}};
+const GRADES=[['S',4.5,13,20,15],['A',4.0,11,15,13],['B+',3.5,9,12,12],['B',3.0,7,10,10]];
+const r50=v=>Math.round(v/50)*50, f=v=>v.toLocaleString();
+function ofRender(){
+  const n=$('#ofName').value||'지원자',job=$('#ofJob').value,lv=$('#ofLv').value,cur=+$('#ofCur').value,sc=+$('#ofScore').value,want=+$('#ofWant').value;
+  const [lo,hi]=BANDS[job][lv];
+  const g=GRADES.find(x=>sc>=x[1])||null;
+  let body='',note='';
+  if(!g){body=`<div style="color:var(--hold);font-weight:600">면접 평점 3.0 미만은 오퍼 대상이 아닙니다.</div>`;}
+  else{
+    let pLo=r50(cur*(1+g[2]/100)),pHi=r50(cur*(1+g[3]/100));
+    if(cur<lo){pLo=Math.max(pLo,lo);pHi=Math.max(pHi,lo);note='현재 연봉이 밴드 하단보다 낮아 인상률 대신 <b>밴드 하한</b>을 적용했습니다.';}
+    if(pHi>hi){pHi=hi;pLo=Math.min(pLo,hi);note=(cur>=hi?'현재 연봉이 이미 밴드 상단이라 같은 비율을 적용하지 않습니다. 상위 레벨 적합 여부를 먼저 검토하세요. ':'')+'제안 상단을 <b>밴드 상한</b>으로 막았습니다. 부족분은 웰컴보너스로 검토하세요.';}
+    const ctr=r50(cur*(1+g[4]/100));let pick=Math.min(pHi,Math.max(pLo,want?Math.min(r50(want),ctr):ctr));
+    body=`<ul><li>직군·레벨: ${$('#ofJob').selectedOptions[0].text} ${lv} (밴드 ${f(lo)}~${f(hi)}만 원)</li>
+      <li>면접 ${sc}점 → <b>${g[0]}등급</b>, 인상률 중심 ${g[4]}% · 허용 ${g[2]}~${g[3]}%</li>
+      <li>현재 ${f(cur)}만 원 · 희망 ${f(want)}만 원</li>
+      <li>제안 가능 범위 <b>${f(pLo)}~${f(pHi)}만 원</b> → 제안안 <b>${f(pick)}만 원</b> (현재 대비 ${(()=>{const d=cur?Math.round((pick/cur-1)*100):0;return (d>=0?'+':'')+d;})()}%)</li></ul>`+
+      (note?`<div style="color:var(--hold);font-weight:600;margin-top:8px">${note}</div>`:'')+
+      (want>pHi?`<div class="small" style="margin-top:6px">희망 연봉이 기준을 넘습니다. 아래 ‘처우가 아쉽다’ 대응을 준비하세요.</div>`:'');
+  }
+  $('#ofOut').innerHTML=`<b>[오퍼 승인 요청] ${n}님</b>`+body;
+  $('#ofRule').innerHTML='<tr><th>면접 등급</th><th>면접 평균</th><th>인상률 (중심 · 허용)</th><th>설계 의도</th></tr>'+
+    [['S','4.5 이상','15% · 13~20%','핵심인재 후보. 상한은 경쟁 오퍼 대응용'],['A','4.0~4.4','13% · 11~15%','기대 이상'],['B+','3.5~3.9','12% · 9~12%','B와 A 사이'],['B','3.0~3.4','10% · 7~10%','기대 충족 · 합격선 (3.0 미만 불합격)']]
+    .map(r=>`<tr${g&&g[0]===r[0]?' class="new"':''}><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+}
+['ofName','ofJob','ofLv','ofCur','ofScore','ofWant'].forEach(id=>{$('#'+id).addEventListener('input',ofRender);$('#'+id).addEventListener('change',ofRender);});
+ofRender();
+</script>
+</body>
+</html>

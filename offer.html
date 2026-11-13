@@ -1,0 +1,1173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>오퍼 설계 도구</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@400;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#f6f7f6;--surface:#ffffff;--ink:#16201f;--ink-2:#4b5856;--ink-3:#7f8b89;--line:#dde3e1;
+  --accent:#1f5a63;--tint:#e6efef;--ok:#2f7d5b;--ok-tint:#e3f1ea;--hold:#a5671a;--hold-tint:#f7ecda;--bad:#a33d34;--bad-tint:#f6e3e1;
+  --display:"Hahmlet","Nanum Myeongjo",serif;
+  --body:"IBM Plex Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1514;--surface:#151d1c;--ink:#e7ecea;--ink-2:#a9b5b2;--ink-3:#77837f;--line:#26302e;--accent:#7cc3c4;--tint:#1a2a2a;
+  --ok:#6fc49b;--ok-tint:#173027;--hold:#e0a957;--hold-tint:#33281a;--bad:#e58a80;--bad-tint:#3a201d;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1514;--surface:#151d1c;--ink:#e7ecea;--ink-2:#a9b5b2;--ink-3:#77837f;--line:#26302e;--accent:#7cc3c4;--tint:#1a2a2a;
+  --ok:#6fc49b;--ok-tint:#173027;--hold:#e0a957;--hold-tint:#33281a;--bad:#e58a80;--bad-tint:#3a201d;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+input::placeholder,textarea::placeholder{color:var(--ink-3);opacity:.7;font-style:italic}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.65;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1440px;margin:0 auto;padding:0 20px 64px}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.01em}
+a{color:var(--accent)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:24px 0 0;font-size:14px;color:var(--ink-2)}
+header.h{padding:28px 0 18px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+header.h h1{font-size:clamp(26px,3.4vw,36px)}
+header.h p{margin:6px 0 0;color:var(--ink-2);max-width:62ch}
+.proto{font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:99px;background:var(--hold-tint);color:var(--hold)}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:10px 16px;color:var(--ink-2);font-weight:600;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.grid>*{min-width:0}
+@media (max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.sec{font-size:13px;color:var(--ink-3);font-weight:600;margin:18px 0 8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+body{overflow-x:clip}
+.sec:first-child{margin-top:0}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form .full{grid-column:1 / -1}
+label.f{font-size:13px;color:var(--ink-3);display:flex;flex-direction:column;gap:4px}
+input,select,textarea{font:inherit;font-size:14.5px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);width:100%}
+textarea{min-height:120px;resize:vertical;line-height:1.6}
+@media (max-width:520px){.form{grid-template-columns:1fr}}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink-2);padding:6px 12px;font-size:13.5px;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.hint{font-size:12.5px;color:var(--ink-3)}
+.result .big{font-family:var(--display);font-size:38px;line-height:1.15}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.kv div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--bg)}
+.kv b{display:block;font-family:var(--display);font-size:20px}
+.kv span{font-size:12.5px;color:var(--ink-2)}
+@media (max-width:520px){.kv{grid-template-columns:1fr 1fr}}
+.axis{position:relative;margin:4px 10px 8px}
+.axis .rangeTop{position:absolute;transform:translateX(-50%);font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap}
+.axis .track{position:absolute;left:0;right:0;top:32px;height:4px;background:var(--line);border-radius:99px}
+.axis .band{position:absolute;top:22px;height:24px;border-radius:7px;background:var(--tint);border:1px solid var(--line)}
+.axis .prange{position:absolute;top:28px;height:12px;border-radius:6px;background:var(--accent);opacity:.4}
+.axis .prange.point{width:4px!important;min-width:4px;opacity:1;border-radius:2px}
+.axis .tick{position:absolute;top:48px;transform:translateX(-50%);font-size:11px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.axis .mk{position:absolute;top:26px;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;box-sizing:border-box;box-shadow:0 0 0 2px var(--surface)}
+.axis .mk.cur{background:var(--ink-3)}
+.axis .mk.off{background:var(--accent);width:18px;height:18px;top:25px;box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--accent)}
+.axis .mk.want{background:var(--surface);border:2.5px solid var(--hold)}
+.axis .mklabel{position:absolute;transform:translateX(-50%);font-size:12.5px;text-align:center;white-space:nowrap;line-height:1.35}
+.axis .mklabel b{font-variant-numeric:tabular-nums;display:block}
+.axis .mklabel.cur{color:var(--ink-2)}
+.axis .mklabel.off{color:var(--accent)}
+.axis .mklabel.want{color:var(--hold)}
+.range{position:relative;height:38px;margin:10px 18px 4px}
+.range .band{position:absolute;top:14px;height:10px;border-radius:99px;background:var(--tint)}
+.range .prop{position:absolute;top:14px;height:10px;border-radius:99px;background:var(--accent)}
+.range .mk{position:absolute;top:6px;width:2px;height:26px;background:var(--ink)}
+.range .mk span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:11.5px;color:var(--ink-2);white-space:nowrap}
+.flags{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.flag{font-size:13.5px;padding:8px 12px;border-radius:10px}
+.flag.warn{background:var(--hold-tint);color:var(--hold)}
+.flag.bad{background:var(--bad-tint);color:var(--bad)}
+.flag.ok{background:var(--ok-tint);color:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:8px 14px;font-weight:600;font-size:14px}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.toast{font-size:13.5px;color:var(--ok);font-weight:600}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:12.5px;color:var(--ink-3);font-weight:600;text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td input{padding:4px 6px;font-size:13.5px;width:84px}
+td select{padding:4px 6px;font-size:13.5px;width:auto}
+.tw{overflow-x:auto}
+.casebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:-6px 0 16px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);font-size:14px}
+.casebar .sv{color:var(--ink-3);font-size:12.5px;margin-left:auto}
+.p-new{background:var(--hold-tint);color:var(--hold)}
+.letter{border:1px solid var(--line);border-radius:12px;padding:22px 24px;background:#fff;color:#222;font-family:'Malgun Gothic',sans-serif;font-size:13px;line-height:1.75;margin-top:8px;outline-offset:3px}
+.letter:focus{outline:2px solid var(--accent)}
+.letter h2{text-align:center;font-size:20px;margin:0 0 4px;letter-spacing:.04em}
+.letter ul{margin:2px 0 6px 18px;padding:0}
+.tw td .btn{padding:3px 10px;font-size:12.5px}
+.pill{font-size:12.5px;font-weight:600;padding:2px 9px;border-radius:99px;white-space:nowrap}
+.p-sent{background:var(--tint);color:var(--accent)} .p-acc{background:var(--ok-tint);color:var(--ok)}
+.p-adj{background:var(--hold-tint);color:var(--hold)} .p-wd{background:var(--bad-tint);color:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.stats div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+.stats b{display:block;font-family:var(--display);font-size:28px;line-height:1.2}
+.stats span{font-size:13px;color:var(--ink-2)}
+@media (max-width:720px){.stats{grid-template-columns:1fr 1fr}}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bars .b{display:grid;grid-template-columns:120px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13.5px}
+.bars i{display:block;height:14px;border-radius:5px;background:var(--bad)}
+.play{margin:0;padding-left:18px;font-size:14px;color:var(--ink-2)}
+.play li{margin:3px 0}
+footer{margin-top:40px;font-size:13px;color:var(--ink-3)}
+.calc-t{margin-top:10px;max-width:420px}
+.calc-t th{width:120px;background:var(--bg);color:var(--ink-2);font-size:13.5px}
+.calc-t td{text-align:right;font-variant-numeric:tabular-nums}
+.calc-t tr.hl th,.calc-t tr.hl td{background:var(--hold-tint);color:var(--ink);font-weight:700}
+.career-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto auto auto;gap:6px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.career-row>input:first-child{grid-column:1 / -1}
+.career-row input[type=date]{padding:5px 6px;font-size:13px}
+.career-row.ex input{color:var(--ink-3);text-decoration:line-through}
+.career-row .dur{text-align:right;color:var(--ink-2);white-space:nowrap}
+@media (max-width:600px){.career-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.career-row .dur{text-align:left}}
+.drop{display:block;border:1.5px dashed var(--line);border-radius:12px;padding:14px;background:var(--bg);font-size:14px;line-height:1.6;cursor:pointer}
+.drop input[type=file]{display:block;width:100%;margin-top:10px}
+.drop.on{border-color:var(--accent);background:var(--tint)}
+.doc-card{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:13.5px;background:var(--surface)}
+.doc-card b{font-size:14px}
+details summary{cursor:pointer}
+.mailprev{border:1px solid var(--line);border-radius:10px;padding:16px;background:#fff;color:#222;max-height:560px;overflow:auto;font-size:13.5px}
+.mailprev table{border-collapse:collapse;width:100%}
+.mailprev td{white-space:normal;font-size:13px;color:#222}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span><b>임은성</b> HR 포트폴리오</span><span><a href="demo.html">데모로 돌아가기</a> · <a href="index.html">포트폴리오</a></span></div>
+  <header class="h">
+    <div>
+      <h1>오퍼 설계 도구</h1>
+      <p>최종합격자 공유부터 처우 사전정보 요청, 서류 확인, 밴드·면접 평점 기준의 제안 연봉 산정과 슬랙 컨펌, 오퍼 레터 발송, 수락까지 한 지원자 단위로 이어서 관리합니다. 입력한 내용은 자동 저장되어 오퍼 현황에서 다시 불러올 수 있습니다. 실제로 쓰던 오퍼 기준표를 도구로 옮긴 프로토타입이며, 모든 금액과 사람은 가상입니다.</p>
+    </div>
+    <div class="row" style="justify-content:flex-end"><span class="proto">프로토타입 · 가상 데이터</span><button class="btn" id="fillDemo">예시로 채워 보기</button><button class="btn" id="clearAll">새 지원자 (비우기)</button></div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="track">오퍼 현황</button>
+    <button role="tab" aria-selected="false" data-tab="pre">1. 사전정보 요청</button>
+    <button role="tab" aria-selected="false" data-tab="reply">2. 회신·서류 확인</button>
+    <button role="tab" aria-selected="false" data-tab="calc">3. 오퍼 산정·컨펌</button>
+    <button role="tab" aria-selected="false" data-tab="send">4. 오퍼 발송</button>
+    <button role="tab" aria-selected="false" data-tab="rules">기준표</button>
+  </div>
+  <div class="casebar" id="caseBar" aria-live="polite"></div>
+
+  <!-- PRE -->
+  <section id="tab-pre" hidden>
+    <div class="grid">
+      <div class="panel">
+        <div class="sec">받는 사람</div>
+        <div class="form">
+          <label class="f">지원자<input id="pName" value="송유리"></label>
+          <label class="f">지원자 이메일<input id="pMail" type="email" value="yuri@example.com"></label>
+          <label class="f">포지션<input id="pPos" value="퍼포먼스 마케터"></label>
+          <label class="f">담당자<input id="pOwner" value="채용팀 담당자"></label>
+          <label class="f">회사명<input id="pCo" value="라이트하우스"></label>
+          <label class="f">참조 (선택)<input id="pCc" placeholder="예: 채용팀 공용 메일"></label>
+        </div>
+        <div class="sec">보내기</div>
+        <div class="row">
+          <button class="btn primary" id="pSendMail">메일 앱으로 보내기</button>
+          <button class="btn" id="pSendGmail">Gmail에서 열기</button>
+          <button class="btn" id="pCopy">표 양식 복사</button>
+        </div>
+        <p class="hint" style="margin:8px 0 0">버튼을 누르면 표 양식 본문이 복사되고, 받는 사람과 제목이 채워진 새 메일 창이 열립니다. 본문 칸에 <b>Ctrl+V</b>로 붙여넣은 뒤 직접 보내 주세요.</p>
+        <div id="pSent" class="flag ok" style="margin-top:12px" hidden></div>
+        <div class="row" style="margin-top:14px"><button class="btn" id="pNext">회신 받음 · 2단계로</button><span class="toast" id="pToast" aria-live="polite"></span></div>
+      </div>
+      <div class="panel">
+        <div class="sec">요청 메일 미리보기</div>
+        <label class="f" style="margin-bottom:8px">제목<input id="pSubj"></label>
+        <div id="pPreview" class="mailprev" aria-label="요청 메일 본문 미리보기"></div>
+        <details style="margin-top:8px"><summary class="hint">텍스트 버전 보기 (표가 깨지는 메일 프로그램용)</summary><textarea id="pDraft" style="min-height:300px;margin-top:6px" aria-label="사전정보 요청 메일 텍스트 본문"></textarea></details>
+        <p class="hint" style="margin:8px 0 0">처우 검토 목적으로만 쓰고 채용 확정이 아니라는 점, 서류는 나중에 내도 된다는 점을 함께 적습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- REPLY -->
+  <section id="tab-reply" hidden>
+    <div class="grid">
+      <div class="panel">
+        <div class="sec">받은 서류 불러오기 <span class="hint">PDF는 이 브라우저 안에서만 읽고 어디에도 올리지 않습니다</span></div>
+        <label class="drop" id="docDrop">원천징수영수증 · 급여명세서 · 건강보험 자격득실확인서 · 경력증명서 (PDF·캡처 이미지) 또는 지원자 회신 메일(.eml) 파일을 선택하거나 여기에 끌어다 놓으세요
+          <input type="file" id="docFile" accept=".pdf,.txt,.png,.jpg,.jpeg,.webp,.eml" multiple>
+        </label>
+        <details style="margin-top:8px"><summary class="hint">스캔본이라 글자를 못 읽을 때: 내용을 복사해 붙여넣기</summary>
+          <textarea id="docText" style="min-height:110px;margin-top:6px" placeholder="서류 내용을 붙여넣으세요"></textarea>
+          <div class="row" style="margin-top:6px"><button class="btn" id="docParse">붙여넣은 내용 읽기</button></div>
+        </details>
+        <div id="docOut" aria-live="polite"></div>
+        <div class="sec">총 경력 계산 <span class="hint">인턴·지역세대원 등은 '제외'에 체크하거나 삭제하세요</span></div>
+        <div id="pCareer"></div>
+        <div class="row" style="margin-top:8px"><button class="btn" id="pAddRow">직장 추가</button><span class="hint" id="pTotal"></span></div>
+      </div>
+      <div class="panel">
+        <label class="f" style="margin-bottom:14px">지원자 이름<input id="rName" placeholder="1단계에서 입력한 이름이 여기에 함께 표시됩니다"></label>
+        <div class="sec">회신 체크리스트 <span class="hint">진행 확인용(선택) · 서류를 불러오면 자동으로 체크됩니다</span></div>
+        <div id="pChecks"></div>
+        <div class="sec">회신 메일 붙여넣기 <span class="hint">지원자 답장을 통째로 붙여넣으면 아래 칸을 채웁니다</span></div>
+        <textarea id="replyText" style="min-height:120px" placeholder="예) 최종 연봉 및 성과급 : 6,360만원 (24년 성과급 1,186만원 별도)&#10;연봉 외 수당 : 영어학원비 월 40만원&#10;희망 연봉 : 8,000만원&#10;총 경력기간 : A사 3년 2개월, B사 2년 (총 5년 2개월)&#10;입사 가능일 : 12월 1일 이후"></textarea>
+        <div class="row" style="margin-top:6px"><button class="btn" id="replyParse">답장 내용 읽기</button><span class="hint" id="replyOut" aria-live="polite"></span></div>
+        <div class="sec">회신 내용 <span class="hint">읽은 값을 확인하고 필요하면 고치세요</span></div>
+        <div class="form">
+          <label class="f">직전 연봉(기본급, 만 원)<input id="pCur" type="number" step="50" value="4600"></label>
+          <label class="f">성과급·인센티브(만 원)<input id="pBonus" type="number" step="50" value="300"></label>
+          <label class="f">연봉 외 수당<input id="pAllow" value="식대 월 20만 원"></label>
+          <label class="f">희망 연봉(만 원, 선택 · 숫자 없이 '회사 내규에 따름' 등 직접 입력 가능)<input id="pWant" inputmode="numeric" placeholder="예) 5600 또는 회사 내규에 따름" value="5600"></label>
+          <label class="f full">입사 가능일<input id="pStart" type="date" value="2026-12-01"></label>
+        </div>
+        <div class="row" style="margin-top:12px"><button class="btn primary" id="pToCalc">이 내용으로 오퍼 산정하기</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALC -->
+  <section id="tab-calc" hidden>
+    <div class="grid">
+      <div class="panel">
+        <div class="sec">지원자</div>
+        <div class="form">
+          <label class="f">이름<input id="cName" value="송유리"></label>
+          <label class="f">직군<select id="cJob"></select></label>
+          <label class="f">레벨<select id="cLv"></select></label>
+          <label class="f">입사 예정일<input id="cDate" type="date" value="2026-12-01"></label>
+          <label class="f">고용형태<select id="cType"><option>정규직</option><option>전환형 인턴</option></select></label>
+          <label class="f">지원 경로<select id="cRoute"><option>직접 지원</option><option>다이렉트 소싱</option><option>사내 추천</option><option>외부 추천</option><option>서치펌</option><option>미기재</option></select></label>
+          <label class="f">합류 조직<input id="cTeam" value="글로벌본부 글로벌팀"></label>
+          <label class="f">직책<input id="cRole" value="매니저"></label>
+          <label class="f">현 직장 (재직 여부)<input id="cNow" value="OO마케팅 재직 중"></label>
+          <label class="f">총 경력<input id="cCareer" value="5년"></label>
+          <label class="f">연봉 외 수당<input id="cAllow" value="교육비 월 40만 원"></label>
+          <label class="f">입사 가능일<input id="cAvail" value="11월"></label>
+        </div>
+
+        <div class="sec">직전 연봉 <span class="seg" id="curMode" role="group" aria-label="직전 연봉 입력 방식" style="margin-left:6px"><button aria-pressed="true" data-m="direct">연봉 입력</button><button aria-pressed="false" data-m="convert">원천징수로 환산</button><button aria-pressed="false" data-m="pay">급여명세서로 환산</button></span></div>
+        <div class="form" id="curDirect">
+          <label class="f">직전 기본 연봉(만 원)<input id="cCur" type="number" step="50" value="4600"></label>
+          <label class="f">별도 상여·인센티브(만 원, 참고)<input id="cBonus" type="number" step="50" value="300"></label>
+        </div>
+        <div id="curConvert" hidden>
+          <div class="form">
+            <label class="f">근무기간 시작 (영수증 11번, 없으면 입사일)<input id="cJoin" type="date" value="2026-02-26"></label>
+            <label class="f">근무기간 종료 (영수증 11번, 재직 중이면 기준일)<input id="cLeave" type="date" value="2026-05-11"></label>
+            <label class="f">13. 급여 (원)<input id="cSal" type="number" value="27612213"></label>
+            <label class="f">18-40. 비과세 식대 (원)<input id="cMeal" type="number" value="0"></label>
+            <label class="f">14. 상여 (원, 성과급으로 따로 표시)<input id="cWhBonus" type="number" value="0"></label>
+            <label class="f">환산 대상 소득 (원) = 급여 + 식대<input id="cInc" type="number" value="27612213" readonly></label>
+          </div>
+          <table class="calc-t" id="convTbl" aria-label="연봉 환산 계산"></table>
+          <div class="hint" style="margin-top:4px">기본 연봉을 보기 위해 13.급여에 비과세 식대만 더합니다. 14.상여는 성과급으로 따로 표시하고, 18-32 중소기업 감면소득은 급여·상여와 같은 금액을 한 번 더 적은 것이라 더하지 않습니다. 시작일은 근무기간 시작과 그해 1월 1일 중 늦은 날, 근무일은 시작·종료일을 모두 포함합니다.</div>
+        </div>
+        <div id="curPay" hidden>
+          <div class="form">
+            <label class="f">기본급 1개월째(원)<input id="payB1" type="number" placeholder="예) 2309374"></label>
+            <label class="f">기본급 2개월째(원, 선택)<input id="payB2" type="number"></label>
+            <label class="f">기본급 3개월째(원, 선택)<input id="payB3" type="number"></label>
+            <label class="f">월 식대(원, 참고용 별도표시)<input id="payMeal" type="number"></label>
+            <label class="f">월 기타 고정수당(원, 참고용 별도표시)<input id="payEtc" type="number"></label>
+          </div>
+          <table class="calc-t" id="payTbl" aria-label="급여명세서 환산 계산"></table>
+          <div class="hint" style="margin-top:4px">급여명세서의 <b>기본급만</b> 평균 내어 ×12로 연봉을 환산합니다. 식대·고정수당(연장수당 등)은 연봉에 더하지 않고 '연봉 외 수당'에 참고용으로 따로 적습니다. 급여명세서 PDF를 2단계에서 올리면 이 값들이 자동으로 채워집니다.</div>
+        </div>
+
+        <div class="sec">희망 조건과 면접</div>
+        <div class="form">
+          <label class="f">희망 연봉(만 원 · 숫자 없이 '회사 내규에 따름' 등 직접 입력 가능)<input id="cWant" inputmode="numeric" placeholder="예) 5600 또는 회사 내규에 따름" value="5600"></label>
+          <label class="f">면접관 점수 (5점 척도, 그리팅 100점도 가능 · 쉼표로 구분)<input id="cScores" value="4.5, 4.2, 4.3"></label>
+          <label class="f full">메모<input id="cMemo" value="경쟁사 1곳과 병행 중, 연내 입사 희망"></label>
+        </div>
+      </div>
+
+      <div class="panel result" aria-live="polite">
+        <div class="sec">산정 결과</div>
+        <div id="rOut"></div>
+        <div id="rRange" aria-label="직전·제안·희망 연봉 비교"></div>
+        <div class="hint" id="rRangeLbl"></div>
+        <div class="flags" id="rFlags"></div>
+
+        <div class="sec">최종 제안</div>
+        <div class="form">
+          <label class="f">제안 연봉(만 원)<input id="cOffer" type="number" step="50"></label>
+          <label class="f">웰컴보너스(만 원)<input id="cWelcome" type="number" step="50" value="0"></label>
+          <label class="f">전속계약금<select id="cRetain"><option value="none">해당 없음</option><option value="decide">수습 통과 시 지급 여부 결정</option><option value="notice">수습 종료 시점 금액 사전 안내</option></select></label>
+          <label class="f">전속계약금 금액(만 원, 사전 안내 시)<input id="cRetainAmt" type="number" step="500" value="3000"></label>
+          <label class="f">컨펌 받을 분<input id="cApprovers" value="@부문장 (@CEO, @CFO)"></label>
+          <label class="f" id="feeWrap">서치펌 수수료율(%)<input id="cFee" type="number" step="1" placeholder="계약 조건 입력"></label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="slackBtn">HR_Alert로 컨펌 요청 보내기</button>
+          <button class="btn" id="copyBtn">복사해서 슬랙에 붙여넣기</button>
+          <button class="btn" id="saveBtn">컨펌 완료 · 4단계로</button>
+          <span class="toast" id="toast" aria-live="polite"></span>
+        </div>
+        <textarea id="draft" style="margin-top:10px" aria-label="슬랙 컨펌 요청 초안"></textarea>
+        <details id="slackCfg" style="margin-top:8px"><summary class="hint">슬랙 연결 설정 (HR_Alert 봇)</summary>
+          <div class="form" style="margin-top:8px">
+            <label class="f">봇 토큰 (xoxb-…)<input id="slToken" type="password" autocomplete="off" placeholder="이 브라우저에만 저장됩니다"></label>
+            <label class="f">받는 곳 (채널 ID 또는 사용자 ID)<input id="slTo" placeholder="예) C0123… 채널 / U0123… 개인 DM"></label>
+          </div>
+          <p class="hint" style="margin:6px 0 0">토큰은 페이지 파일이 아니라 이 브라우저 저장소에만 남습니다. 설정이 없으면 ‘복사해서 붙여넣기’로 쓰면 됩니다. 실제 멘션은 ‘컨펌 받을 분’ 칸에 &lt;@사용자ID&gt; 형식으로 적어야 알림이 갑니다.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACK -->
+  <section id="tab-track">
+    <div class="stats" id="tStats"></div>
+    <div class="panel" style="margin-bottom:20px">
+      <div class="sec">지원자별 진행 <span class="hint">‘불러오기’를 누르면 저장된 입력값과 함께 다음 단계로 이동합니다</span></div>
+      <div class="tw"><table id="tTbl"></table></div>
+      <div class="row" style="margin-top:12px"><button class="btn" id="resetBtn">예시 데이터로 되돌리기</button></div>
+    </div>
+    <div class="grid">
+      <div class="panel">
+        <div class="sec">최종합격자 등록 <span class="hint">채용팀 ‘최종합격자 공유’ 메시지를 붙여넣으세요</span></div>
+        <textarea id="shareText" style="min-height:150px" placeholder="[공유] 최종합격자 발생&#10;이름: 정하린&#10;채용 팀: 브랜드본부 / 콘텐츠팀&#10;포지션: [브랜드본부] 콘텐츠 마케터 (경력)&#10;직책: Manager / LV2&#10;지원경로: 미기재&#10;오퍼 담당자: @채용 담당자&#10;참고 사항: 다음 주 월요일 처우 자료 요청 예정"></textarea>
+        <div class="row" style="margin-top:6px"><button class="btn primary" id="shareAdd">목록에 등록</button><span class="hint" id="shareOut" aria-live="polite"></span></div>
+        <p class="hint" style="margin:8px 0 0">실제 운영에서는 공유봇의 ‘정보 입력/수정’이 완료될 때 이 목록에 자동으로 등록되도록 연결합니다. 프로토타입이라 붙여넣기로 대신합니다.</p>
+      </div>
+      <div class="panel">
+        <div class="sec">철회 사유</div>
+        <div class="bars" id="tBars"></div>
+        <div class="sec">사유별 대응</div>
+        <ul class="play">
+          <li><b>처우</b>: 반기 성과급·레벨 승급 경로를 설명하고 필요하면 웰컴보너스. 기본 연봉 재조정은 내부 형평 때문에 지양</li>
+          <li><b>직무·역할</b>: 합류할 팀 리드와 커피챗, 필요하면 대표 통화</li>
+          <li><b>타사 입사</b>: 오퍼 메일 직후 전화로 성장·동료·복지 설명, 시니어는 경영진이 한 번 더 연락</li>
+          <li><b>개인 사정</b>: 6개월 뒤 재오퍼 대상 목록에 올림</li>
+        </ul>
+        <div class="sec">재오퍼 대상</div>
+        <div id="tRe" class="hint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEND -->
+  <section id="tab-send" hidden>
+    <div class="grid">
+      <div class="panel">
+        <div class="sec">오퍼 레터 내용 <span class="hint">3단계 값이 채워져 있습니다. 컨펌 결과대로 고치세요</span></div>
+        <div class="form">
+          <label class="f">지원자 이메일<input id="sMail" type="email"></label>
+          <label class="f">참조 (선택)<input id="sCc" placeholder="예: 채용팀 공용 메일"></label>
+          <label class="f">입사 예정일<input id="sDate" type="date"></label>
+          <label class="f">회신 기한<input id="sDue" type="date"></label>
+          <label class="f full">직위/직책<input id="sPosLine"></label>
+          <label class="f">계약 연봉 (기본급, 만 원)<input id="sOffer" type="number" step="50"></label>
+          <label class="f">웰컴보너스 (만 원)<input id="sWelcome" type="number" step="50"></label>
+          <label class="f">수습(시용) 기간 (개월, 0=없음)<input id="sProbation" type="number" step="1" value="3"></label>
+          <label class="f">수습 중 급여<select id="sProbationPay"><option value="same">차등 없음</option><option value="less">일부 차감</option></select></label>
+          <label class="f full">주요 직무 (한 줄에 하나)<textarea id="sDuty" style="min-height:80px"></textarea></label>
+          <label class="f full">기타 복지 (한 줄에 하나 · 이 브라우저에 기본값으로 저장)<textarea id="sBenefit" style="min-height:110px"></textarea></label>
+          <label class="f full">책임자 (연락처)<input id="sBoss" value="라이트하우스 대표이사"></label>
+          <label class="f full" style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="sAttach" style="width:auto"> <span>Offer Letter 별도 첨부</span> <span class="hint">보통 팀리드(LV4) 이상에게만 보냅니다. 꺼 두면 메일 본문만 보냅니다</span></label>
+        </div>
+        <div class="sec">보내기</div>
+        <div class="row">
+          <button class="btn primary" id="sSendMail">메일 앱으로 보내기</button>
+          <button class="btn" id="sSendGmail">Gmail에서 열기</button>
+          <button class="btn" id="sCopy">메일 본문 복사</button>
+          <button class="btn" id="sPrint">오퍼 레터 PDF로 저장</button>
+        </div>
+        <p class="hint" style="margin:8px 0 0" id="sPrintHint">‘오퍼 레터 PDF로 저장’에서 인쇄 대상을 PDF로 골라 저장한 뒤 메일에 첨부하세요. 메일 버튼은 본문을 복사하고 받는 사람·제목이 채워진 창을 엽니다.</p>
+        <div class="sec">회신 결과</div>
+        <div class="row"><button class="btn" data-res="수락">수락</button><button class="btn" data-res="조정 요청">조정 요청</button><button class="btn" data-res="철회">철회</button><span class="toast" id="sToast" aria-live="polite"></span></div>
+      </div>
+      <div class="panel">
+        <div class="sec">입사 제안 메일</div>
+        <label class="f" style="margin-bottom:8px">제목<input id="sSubj"></label>
+        <div id="sPreview" class="mailprev" aria-label="입사 제안 메일 미리보기"></div>
+        <div id="letterWrap">
+          <div class="sec" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">Offer Letter 미리보기 <span class="hint">클릭해서 내용을 직접 고칠 수 있습니다</span><button class="btn" id="sLetterReset" style="margin-left:auto;padding:3px 10px;font-size:12.5px">자동 생성 내용으로 되돌리기</button></div>
+          <div id="sLetter" class="letter" contenteditable="true" aria-label="오퍼 레터 미리보기 (직접 수정 가능)"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section id="tab-rules" hidden>
+    <div class="grid">
+      <div class="panel">
+        <div class="sec">직군·레벨별 연봉 밴드 (만 원) <span class="hint">값을 바꾸면 산정에 바로 반영됩니다</span></div>
+        <div class="tw"><table id="bTbl"></table></div>
+      </div>
+      <div class="panel">
+        <div class="sec">면접 평점별 인상률</div>
+        <div class="tw"><table id="gTbl"></table></div>
+        <div class="sec">예외 규칙</div>
+        <ul class="play">
+          <li>직전 연봉이 밴드 하단보다 낮으면 인상률 대신 <b>밴드 하한</b> 적용</li>
+          <li>계산 결과가 밴드 상한을 넘으면 <b>상한에서 멈추고</b>, 부족분은 웰컴보너스로 검토</li>
+          <li>직전 연봉이 이미 밴드 상단이면 같은 비율을 적용하지 않고 <b>상위 레벨 적합 여부</b>부터 검토</li>
+          <li>10~12월 입사자는 다음 해 연봉 조정 대상에서 빠지므로 제안 시 안내</li>
+          <li>면접 평균 3.0 미만은 불합격이라 오퍼 대상 아님 (평가척도: 3.0 = 기대 충족·합격선)</li>
+          <li>기본 인상률 10% + 면접 가산(4.5↑ +5 · 4.0↑ +3 · 3.5↑ +2)을 중심값으로, 허용 범위 안에서 조정. 우수인재는 기본 12%, 직군 가산(개발 +3~5%, 외국어 +0~2%) 별도</li>
+        </ul>
+        <div class="row" style="margin-top:12px"><button class="btn" id="ruleReset">기준표 초기화</button></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>임은성 · 실제 오퍼 기준(직군·레벨 밴드, 평점별 인상률, 예외 규칙)을 바탕으로 만든 프로토타입입니다. 입력한 내용은 이 브라우저에만 저장됩니다.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const f=v=>Math.round(v).toLocaleString(), r50=v=>Math.round(v/50)*50;
+const store={get(k,d){try{const v=localStorage.getItem('offer.'+k);return v?JSON.parse(v):d;}catch(e){return d;}},set(k,v){try{localStorage.setItem('offer.'+k,JSON.stringify(v));}catch(e){}}};
+
+const JOBS={ae:'퍼포먼스 마케터',design:'디자이너',global:'글로벌 마케터',creative:'카피·콘텐츠'};
+const LVS=['LV1','LV2','LV3','LV4'];
+const BANDS0={ae:{LV1:[3700,4300],LV2:[4400,5500],LV3:[5600,7000],LV4:[7100,9000]},design:{LV1:[3600,4200],LV2:[4300,5600],LV3:[5700,7400],LV4:[7500,9500]},global:{LV1:[3900,4600],LV2:[4700,5900],LV3:[6000,7600],LV4:[7700,9800]},creative:{LV1:[3500,4200],LV2:[4300,5400],LV3:[5500,6900],LV4:[7000,8800]}};
+const GRADES0=[{g:'S',name:'Exceptional · 핵심인재 후보',min:4.5,c:15,lo:13,hi:20,why:'기본 10% + 가산 5%. 상한 20%는 경쟁 오퍼 대응용'},{g:'A',name:'Exceeds Expectations',min:4.0,c:13,lo:11,hi:15,why:'기본 10% + 가산 3%'},{g:'B+',name:'B와 A 사이',min:3.5,c:12,lo:9,hi:12,why:'기본 10% + 가산 2%'},{g:'B',name:'Meets Expectations · 합격선',min:3.0,c:10,lo:7,hi:10,why:'기본 10%. 3.0은 기대 충족(합격)'}];
+let BANDS=store.get('bands',JSON.parse(JSON.stringify(BANDS0)));Object.keys(BANDS0).forEach(j=>{BANDS[j]=BANDS[j]||{};LVS.forEach(l=>{if(!BANDS[j][l])BANDS[j][l]=[...BANDS0[j][l]];});});
+let GRADES=store.get('grades2',JSON.parse(JSON.stringify(GRADES0)));
+
+// tabs
+$$('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  $$('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  ['pre','reply','calc','send','track','rules'].forEach(t=>$('#tab-'+t).hidden=t!==b.dataset.tab);
+  if(b.dataset.tab==='track')renderTrack();if(b.dataset.tab==='send')sendOpen();
+}));
+
+// selects
+$('#cJob').innerHTML=Object.entries(JOBS).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+$('#cLv').innerHTML=LVS.map(l=>`<option${l==='LV2'?' selected':''}>${l}</option>`).join('');
+
+// current salary mode
+let curMode='direct';
+$$('#curMode button').forEach(b=>b.addEventListener('click',()=>{$$('#curMode button').forEach(x=>x.setAttribute('aria-pressed',x===b));curMode=b.dataset.m;$('#curDirect').hidden=curMode!=='direct';$('#curConvert').hidden=curMode!=='convert';$('#curPay').hidden=curMode!=='pay';calc(true);}));
+['payB1','payB2','payB3','payMeal','payEtc'].forEach(id=>$('#'+id).addEventListener('input',()=>calc(true)));
+const D=s=>{if(!s)return null;const d=new Date(s+'T00:00:00');return isNaN(d)?null:d;};
+const ymd=d=>d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';
+function convCalc(){
+  const inc=(+$('#cSal').value||0)+(+$('#cMeal').value||0);$('#cInc').value=inc||'';
+  const wb=+$('#cWhBonus').value||0;if(wb&&curMode==='convert')$('#cBonus').value=Math.round(wb/10000);
+  const join=D($('#cJoin').value),leave=D($('#cLeave').value);
+  if(!join||!leave||leave<join){$('#convTbl').innerHTML='<tr><td class="hint" style="text-align:left">입사일과 퇴사일을 확인해 주세요.</td></tr>';return 0;}
+  const jan1=new Date(leave.getFullYear(),0,1),start=join>jan1?join:jan1;
+  const days=Math.round((leave-start)/86400000)+1,daily=inc/days,yd=((leave.getFullYear()%4===0&&leave.getFullYear()%100!==0)||leave.getFullYear()%400===0)?366:365,annual=daily*yd;
+  const W=v=>Math.round(v).toLocaleString();
+  $('#convTbl').innerHTML=`<tr><th>시작일</th><td>${ymd(start)}</td></tr><tr><th>종료일</th><td>${ymd(leave)}</td></tr><tr><th>근무일</th><td>${days}</td></tr><tr><th>소득</th><td>${W(inc)}</td></tr><tr><th>일급</th><td>${W(daily)}</td></tr><tr class="hl"><th>환산연봉</th><td>${W(annual)}원<br><span class="hint">≈ ${W(annual/10000)}만 원</span></td></tr>`;
+  return Math.round(annual/10000);
+}
+function convAnnual(){const j=D($('#cJoin').value),l=D($('#cLeave').value);const inc=(+$('#cSal').value||0)+(+$('#cMeal').value||0);if(!j||!l||l<j||!inc)return null;const st=j>new Date(l.getFullYear(),0,1)?j:new Date(l.getFullYear(),0,1);const days=Math.round((l-st)/86400000)+1;const y=l.getFullYear();const yd=((y%4===0&&y%100!==0)||y%400===0)?366:365;return {v:Math.round(inc/days*yd/10000),y,bonus:Math.round((+$('#cWhBonus').value||0)/10000)};}
+function payCalc(){
+  const vals=[+$('#payB1').value||0,+$('#payB2').value||0,+$('#payB3').value||0].filter(v=>v>0);
+  const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+  const meal=+$('#payMeal').value||0,etc=+$('#payEtc').value||0;
+  const al=[];if(meal)al.push(`식대 월 ${Math.round(meal/10000).toLocaleString()}만 원`);if(etc)al.push(`기타수당 월 ${Math.round(etc/10000).toLocaleString()}만 원`);
+  if(al.length)$('#cAllow').value=al.join(', ');
+  const W=v=>Math.round(v).toLocaleString();
+  $('#payTbl').innerHTML=vals.length?`<tr><th>입력한 개월 수</th><td>${vals.length}개월</td></tr><tr><th>평균 월 기본급</th><td>${W(avg)}원</td></tr><tr class="hl"><th>환산연봉</th><td>${W(avg*12)}원<br><span class="hint">≈ ${W(avg*12/10000)}만 원</span></td></tr>`:'<tr><td class="hint" style="text-align:left">기본급을 1개 이상 입력해 주세요.</td></tr>';
+  return Math.round(avg*12/10000);
+}
+function curSalary(){
+  if(curMode==='direct')return +$('#cCur').value||0;
+  if(curMode==='pay')return payCalc();
+  return convCalc();
+}
+function rawScores(){return $('#cScores').value.split(/[,\s]+/).map(Number).filter(n=>n>0&&n<=100);}
+function scores(){return rawScores().map(n=>n>5?Math.round(n/20*10)/10:n);}
+
+let state={};
+function calc(resetOffer){
+  const job=$('#cJob').value,lv=$('#cLv').value,cur=curSalary(),wantRaw=$('#cWant').value.trim(),want=+wantRaw.replace(/[,원\s]/g,'')||0;
+  const sc=scores(),avg=sc.length?sc.reduce((a,b)=>a+b,0)/sc.length:0;
+  const [lo,hi]=BANDS[job][lv];
+  const G0=[...GRADES].sort((a,b)=>b.min-a.min).find(x=>avg>=x.min);
+  const flags=[];
+  const G=cur>0?G0:null;
+  if(!cur)flags.push(['bad','직전 연봉이 비어 있습니다. 서류를 불러오거나 직접 입력해 주세요.']);
+  else if(!sc.length)flags.push(['bad','면접관 점수를 입력해 주세요. (왼쪽 ‘면접관 점수’ 칸, 쉼표로 구분)']);
+  $('#cScores').style.borderColor=cur&&!sc.length?'var(--bad)':'';
+  if(!$('#cDate').value&&$('#pStart').value)flags.push(['warn',`회신한 입사 가능일(${$('#cAvail').value||$('#pStart').value})이 이미 지났습니다. 입사 예정일을 새로 정해 주세요.`]);let pLo=0,pHi=0,pick=0;
+  if(!G){if(cur&&sc.length)flags.push(['bad',`면접 평균 ${avg.toFixed(2)}점: 3.0 미만은 오퍼 대상이 아닙니다.`]);}
+  else{
+    pLo=r50(cur*(1+G.lo/100));pHi=r50(cur*(1+G.hi/100));
+    if(cur<lo){pLo=Math.max(pLo,lo);pHi=Math.max(pHi,lo);flags.push(['warn','직전 연봉이 밴드 하단보다 낮아 인상률 대신 밴드 하한을 적용했습니다.']);}
+    if(cur>=hi){flags.push(['warn','직전 연봉이 이미 밴드 상단입니다. 같은 비율을 적용하지 말고 상위 레벨 적합 여부를 먼저 검토하세요.']);}
+    if(pHi>hi){pHi=hi;pLo=Math.min(pLo,hi);flags.push(['warn',`제안 상단을 밴드 상한(${f(hi)}만 원)으로 막았습니다.`]);}
+    const center=r50(cur*(1+(G.c||G.lo)/100));
+    pick=Math.min(pHi,Math.max(pLo,want?Math.min(r50(want),center):center));
+    if(cur<lo)pick=Math.max(pick,pLo);
+    if(want&&want<pLo)flags.push(['warn',`희망 연봉(${f(want)}만 원)이 허용 하한보다 낮아 하한(${f(pLo)}만 원)으로 제안했습니다. 희망 연봉 수준으로 낮춰 제안해도 됩니다.`]);
+    else if(want&&want>pHi)flags.push(['warn',`희망 연봉이 제안 가능 범위보다 ${f(want-pHi)}만 원 높습니다. 웰컴보너스나 성장 경로 설명을 준비하세요.`]);
+    else if(want)flags.push(['ok','희망 연봉이 제안 가능 범위 안에 있습니다.']);
+    else flags.push(['ok',`희망 연봉: ${wantRaw||'회사 내규에 따름'} (지정된 금액 없음)`]);
+    const d=new Date($('#cDate').value);if(d&&d.getMonth()>=9)flags.push(['warn','10~12월 입사라 다음 해 연봉 조정 대상에서 빠집니다. 제안 시 함께 안내하세요.']);
+    if(sc.length>1&&Math.max(...sc)-Math.min(...sc)>=1)flags.push(['warn','면접관 점수 차이가 1점 이상입니다. 디브리프로 의견을 맞춘 뒤 확정하세요.']);
+  }
+  if(resetOffer||!$('#cOffer').value){$('#cOffer').value=pick||'';
+    const gap=G&&want>pHi?Math.min(r50((want-pHi)*0.5),300):0;$('#cWelcome').value=(G&&(G.g==='S'||G.g==='A'))?gap:0;}
+  const offer=+$('#cOffer').value||0,welcome=+$('#cWelcome').value||0;
+  if(G&&offer&&(offer<lo||offer>hi))flags.push(['bad',`제안 연봉이 ${lv} 밴드(${f(lo)}~${f(hi)}만 원)를 벗어났습니다. 승인 시 사유가 필요합니다.`]);
+  const up=cur?Math.round((offer/cur-1)*100):0;
+  if(G&&offer&&cur&&offer<cur)flags.unshift(['bad',`제안 연봉이 직전 연봉보다 ${f(cur-offer)}만 원 낮습니다. 레벨(${lv})이 맞는지 먼저 확인하세요.`]);
+  state={job,lv,cur,want,wantRaw,avg,G,lo,hi,pLo,pHi,offer,welcome,up};
+  $('#rOut').innerHTML=G?`<div class="big">${f(offer)}만 원</div><div class="hint">직전 대비 ${up>=0?'+':''}${up}% · ${G.g}등급(평균 ${avg.toFixed(2)}점) 중심 ${G.c}% · 허용 ${G.lo}~${G.hi}%</div>
+    <div class="kv"><div><b>${f(pLo)}~${f(pHi)}</b><span>제안 가능 범위</span></div><div><b>${f(lo)}~${f(hi)}</b><span>${JOBS[job]} ${lv} 밴드</span></div><div><b>${f(cur)}</b><span>직전 연봉${curMode==='convert'?' (환산)':''}</span></div></div>`:(cur&&sc.length?'<div class="hint">면접 평균 3.0 미만은 불합격이라 오퍼 대상이 아닙니다.</div>':'<div class="hint">직전 연봉과 면접 점수가 있어야 산정할 수 있습니다.</div>');
+  // range viz
+  const mn=Math.min(lo,cur,pLo||lo)*0.95,mx=Math.max(hi,want,pHi||hi)*1.03,x=v=>((v-mn)/(mx-mn)*100).toFixed(1)+'%';
+  if(G){const mn=Math.min(lo,cur)*0.92,mx=Math.max(hi,want||0,offer)*1.05,X=v=>+((v-mn)/(mx-mn)*100).toFixed(1);
+    const collapsed=pLo===pHi;
+    const prange=collapsed?`<div class="prange point" style="left:${X(pLo)}%"></div>`:`<div class="prange" style="left:${X(pLo)}%;width:${(X(pHi)-X(pLo)).toFixed(1)}%"></div>`;
+    const mk=(cls,v)=>v?`<div class="mk ${cls}" style="left:${X(v)}%"></div>`:'';
+    const pts=[{cls:'cur',x:X(cur),label:'직전',val:f(cur)+'만 원',extra:''},{cls:'off',x:X(offer),label:'제안',val:f(offer)+'만 원',extra:`${up>=0?'+':''}${up}%`}];
+    if(want)pts.push({cls:'want',x:X(want),label:'희망',val:f(want)+'만 원',extra:`${want>=cur?'+':''}${Math.round((want/cur-1)*100)}%`});
+    pts.sort((a,b)=>a.x-b.x);
+    const rowX=[];pts.forEach(p=>{let r=0;while(rowX[r]!==undefined&&(p.x-rowX[r])<15)r++;rowX[r]=p.x;p.row=r;});
+    const maxRow=Math.max(...pts.map(p=>p.row));
+    const LBL_BASE=64,ROW_H=40;
+    const labels=pts.map(p=>`<div class="mklabel ${p.cls}" style="left:${p.x}%;top:${LBL_BASE+p.row*ROW_H}px">${p.label}<b>${p.val}${p.extra?` (${p.extra})`:''}</b></div>`).join('');
+    const midX=((X(pLo))+(X(pHi)))/2;
+    const H=LBL_BASE+(maxRow+1)*ROW_H+8;
+    $('#rRange').innerHTML=`<div class="axis" style="height:${H}px">
+      <div class="rangeTop" style="left:${midX}%">제안 가능 범위 ${f(pLo)}~${f(pHi)}만 원${collapsed?' (밴드 경계에 고정)':''}</div>
+      <div class="track"></div>
+      <div class="band" style="left:${X(lo)}%;width:${(X(hi)-X(lo)).toFixed(1)}%"></div>
+      <div class="tick" style="left:${X(lo)}%">${f(lo)}</div><div class="tick" style="left:${X(hi)}%">${f(hi)}</div>
+      ${prange}${mk('cur',cur)}${mk('off',offer)}${mk('want',want)}
+      ${labels}
+    </div>`;
+    $('#rRangeLbl').textContent=`옅은 상자: ${JOBS[job]} ${lv} 밴드 ${f(lo)}~${f(hi)}만 원`;}
+  else{$('#rRange').innerHTML='';$('#rRangeLbl').textContent='';}
+  if(curMode==='direct'&&cur&&+$('#cSal').value){const prev=curMode;const conv=(()=>{const j=D($('#cJoin').value),l=D($('#cLeave').value);const inc=(+$('#cSal').value||0)+(+$('#cMeal').value||0);if(!j||!l||l<j)return 0;const st=j>new Date(l.getFullYear(),0,1)?j:new Date(l.getFullYear(),0,1);const days=Math.round((l-st)/86400000)+1;const y=l.getFullYear();const yd=((y%4===0&&y%100!==0)||y%400===0)?366:365;return Math.round(inc/days*yd/10000);})();
+    if(conv){const d=Math.round((cur/conv-1)*100);flags.push([Math.abs(d)>15?'warn':'ok',`검증: 원천징수영수증(${D($('#cLeave').value).getFullYear()}년) 환산 ${f(conv)}만 원 → 회신 연봉과 ${d>=0?'+':''}${d}% 차이${Math.abs(d)>15?' · 차이가 커서 급여명세서로 확인이 필요합니다':' · 연봉 인상분 수준'}`]);}}
+  if(typeof SRC!=='undefined'&&cur)flags.unshift(['ok',`직전 연봉 출처: ${curMode==='convert'?(SRC.cur.startsWith('원천')?SRC.cur:'원천징수 환산'):curMode==='pay'?'급여명세서 환산 (기본급 평균×12)':(SRC.cur==='예시 값'?'예시 값 (\'모두 지우기\' 후 실제 값을 넣어 주세요)':SRC.cur)}`]);
+  $('#rFlags').innerHTML=flags.map(([c,t])=>`<div class="flag ${c}">${t}</div>`).join('');
+  draft();
+  if(typeof queueSave==='function')queueSave();
+}
+let draftKind='approve';
+function draft(){
+  const s=state,n=$('#cName').value||'지원자';
+  if(!s.G){$('#draft').value='';return;}
+  if(draftKind==='approve'){
+    const d=D($('#cDate').value);const q4=d&&d.getMonth()>=9;const until=d?`${q4?d.getFullYear()+1:d.getFullYear()}년 12월 말까지 적용`:'';
+    const bonus=+$('#cBonus').value,allow=$('#cAllow').value,role=$('#cRole').value,team=$('#cTeam').value;
+    let pos=$('#pPos').value||JOBS[s.job];if(team)pos=pos.replace(/^\s*\[[^\]]+\]\s*/,'');
+    const ret=$('#cRetain').value,ramt=+$('#cRetainAmt').value;const cv=convAnnual();
+    const raw=rawScores();const scoreTxt=raw.some(x=>x>5)?`그리팅 ${raw.join(', ')}점 = 약 ${s.avg.toFixed(1)}점`:`${s.avg.toFixed(1)}점${raw.length>1?` (면접관 ${raw.join(', ')})`:''}`;
+    const notes=[];
+    if(s.cur<s.lo)notes.push(`직전 연봉이 ${s.lv} 밴드 하단보다 낮아 밴드 하한(${f(s.lo)}만 원)으로 책정했습니다.`);
+    else if(s.offer>=s.hi)notes.push(`${s.lv} 밴드 상한(${f(s.hi)}만 원)으로 제한했습니다.`);
+    else notes.push(`면접 ${s.G.g}등급 기준 인상률 중심 ${s.G.c}%로 산정했습니다.`);
+    if(s.want&&s.want>s.offer)notes.push(`희망 연봉과 ${f(s.want-s.offer)}만 원 차이가 있어, 우선 이 선에서 네고해 봐도 좋을 듯한데 의견 부탁드립니다🙏`);
+    else notes.push('의견 부탁드립니다🙏');
+    const offerSub=[`${JOBS[s.job]} ${s.lv} 밴드(${f(s.lo)}~${f(s.hi)}만 원) 참고하여 책정`,`면접 ${s.G.g}등급 → 인상률 중심 ${s.G.c}% · 허용 ${s.G.lo}~${s.G.hi}%`];
+    if(until)offerSub.push(until);
+    if(s.welcome)offerSub.push(`웰컴보너스 ${f(s.welcome)}만 원`);
+    if(ret==='decide')offerSub.push('전속계약금: 수습 통과 시 지급 여부 결정');else if(ret==='notice')offerSub.push(`전속계약금: 수습 종료 시점 ${f(ramt)}만 원 사전 안내`);
+    const curSub=[];if(bonus)curSub.push(`성과급 ${f(bonus)}만 원 별도`);if(allow)curSub.push(allow.includes('별도')?allow:`${allow} 별도`);
+    if(typeof SRC!=='undefined'&&SRC.cur.startsWith('급여명세서'))curSub.push(`근거: ${SRC.cur}`);
+    if(cv&&curMode==='direct')curSub.push(`검증: ${cv.y}년 원천징수영수증 기준 급여+식대 환산 ${f(cv.v)}만 원${cv.bonus?`, 상여 ${f(cv.bonus)}만 원`:''}`);
+    if(cv&&curMode==='convert')curSub.push(`${cv.y}년 원천징수영수증 기준 환산(급여+비과세 식대)${cv.bonus?`, 상여 ${f(cv.bonus)}만 원 별도`:''}`);
+    const fee=+$('#cFee').value,isFirm=$('#cRoute').value==='서치펌';
+    const L=(t,sub)=>`• ${t}`+(sub&&sub.length?'\n'+sub.map(x=>`   ◦ ${x}`).join('\n'):'');
+    $('#draft').value=[
+      `*${`[채용 오퍼] ${team?team+' > ':''}${pos} ${n} ${$('#cApprovers').value}`.replace(/\s+/g,' ').trim()}*`,
+      ...notes,
+      L(`직책: ${role?role+' / ':''}${s.lv}`),
+      L(`제안연봉: ${f(s.offer)}만 원(${s.up>=0?'':''}${s.up}% 인상)`,offerSub),
+      L(`총 경력: ${$('#cCareer').value||'-'}${$('#cNow').value?` (${$('#cNow').value})`:''}`),
+      L(`최종 연봉: ${f(s.cur)}만 원`,curSub),
+      L(`희망 연봉: ${s.want?f(s.want)+'만 원':(s.wantRaw||'회사 내규에 따름')}`),
+      L(`지원경로: ${$('#cRoute').value}`),
+      L(`면접평가: ${scoreTxt}`),
+      L(`입사 가능일: ${$('#cAvail').value||$('#cDate').value||'-'}`),
+      ...($('#cMemo').value?[L('참고사항:',[$('#cMemo').value])]:[]),
+      ...(isFirm?[L('서치펌 수수료:',[`기본급 기준(성과급·전속계약금 제외)${fee?` ${f(s.offer)}만 원 × ${fee}% ≈ ${f(s.offer*fee/100)}만 원`:''}`,'1회성이라 다음 해 조정 연봉과 무관'])]:[])
+    ].join('\n');
+  }else{
+    $('#draft').value=`${n}님, 안녕하세요.
+라이트하우스 인사팀입니다. 면접에 시간 내 주셔서 감사합니다.
+
+${JOBS[s.job]} 포지션으로 함께하고 싶어 아래와 같이 처우를 제안드립니다.
+- 연봉: ${f(s.offer)}만 원${s.welcome?`\n- 웰컴보너스: ${f(s.welcome)}만 원 (입사 첫 달 지급)`:''}
+- 입사 예정일: ${$('#cDate').value}
+- 반기 성과급과 레벨 승급으로 연봉이 오르는 구조는 통화로 자세히 설명드리겠습니다.
+
+검토 후 회신 부탁드리며, 궁금한 점은 편하게 연락 주세요.`;
+  }
+}
+$('#cRole').addEventListener('change',()=>{if(/리드|lead|팀장/i.test($('#cRole').value)&&$('#cLv').value!=='LV4'){$('#cLv').value='LV4';calc(true);}});
+function feeVis(){$('#feeWrap').hidden=$('#cRoute').value!=='서치펌';}$('#cRoute').addEventListener('change',()=>{feeVis();calc(false);});$('#cRetain').addEventListener('change',()=>calc(false));feeVis();
+
+['cName','cType','cRoute','cMemo','cBonus','cTeam','cRole','cNow','cCareer','cAllow','cAvail','cRetain','cRetainAmt','cApprovers','cFee','pPos'].forEach(id=>$('#'+id).addEventListener('input',()=>calc(false)));
+['cJob','cLv','cCur','cSal','cMeal','cWhBonus','cJoin','cLeave','cWant','cScores','cDate'].forEach(id=>{$('#'+id).addEventListener('input',()=>calc(true));$('#'+id).addEventListener('change',()=>calc(true));});
+['cOffer','cWelcome'].forEach(id=>$('#'+id).addEventListener('input',()=>calc(false)));
+$('#copyBtn').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#draft').value);$('#toast').textContent='복사했습니다. 슬랙 채용 오퍼 채널에 붙여넣고 담당자를 멘션해 주세요.';setSt('컨펌 요청');}catch(e){$('#draft').select();$('#toast').textContent='초안을 선택했습니다. Ctrl+C로 복사하세요.';}});
+// HR_Alert (Slack bot) send - token lives only in this browser's storage
+{const c=store.get('slack',{});$('#slToken').value=c.token||'';$('#slTo').value=c.to||'';}
+['slToken','slTo'].forEach(id=>$('#'+id).addEventListener('change',()=>store.set('slack',{token:$('#slToken').value.trim(),to:$('#slTo').value.trim()})));
+$('#slackBtn').addEventListener('click',async()=>{const c=store.get('slack',{}),txt=$('#draft').value;
+  if(!txt){$('#toast').textContent='초안이 비어 있습니다. 산정을 먼저 마쳐 주세요.';return;}
+  if(!c.token||!c.to){$('#slackCfg').open=true;$('#toast').textContent='슬랙 연결 설정을 먼저 입력해 주세요. 설정 없이 쓰려면 복사 버튼을 누르세요.';return;}
+  const btn=$('#slackBtn');btn.disabled=true;$('#toast').textContent='보내는 중…';
+  try{const r=await fetch('https://slack.com/api/chat.postMessage',{method:'POST',body:new URLSearchParams({token:c.token,channel:c.to,text:txt,unfurl_links:'false'})});const j=await r.json();
+    if(j.ok){$('#toast').textContent=`HR_Alert로 보냈습니다 (${new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}). 승인이 나면 ‘컨펌 완료’를 눌러 주세요.`;setSt('컨펌 요청');}
+    else $('#toast').textContent='슬랙 오류: '+j.error+(j.error==='channel_not_found'?' (받는 곳 ID를 확인하세요)':j.error==='invalid_auth'?' (토큰을 확인하세요)':'');}
+  catch(e){$('#toast').textContent='슬랙에 연결하지 못했습니다: '+e.message;}btn.disabled=false;});
+
+// ===== offer cases: one record per applicant, autosaved =====
+const SEED=[
+ {n:'김하늘',team:'퍼포먼스본부',pos:'퍼포먼스 마케터',role:'매니저',job:'ae',lv:'LV1',offer:4100,up:12,st:'수락',why:''},
+ {n:'이도윤',team:'디자인팀',pos:'브랜드 디자이너',role:'매니저',job:'design',lv:'LV2',offer:5000,up:9,st:'수락',why:''},
+ {n:'박서준',team:'글로벌본부',pos:'글로벌 마케터',role:'매니저',job:'global',lv:'LV2',offer:5300,up:11,st:'철회',why:'처우'},
+ {n:'최유나',team:'퍼포먼스본부',pos:'퍼포먼스 마케터',role:'매니저',job:'ae',lv:'LV2',offer:4900,up:10,st:'조정 요청',why:''},
+ {n:'한지민',team:'퍼포먼스본부',pos:'퍼포먼스 마케터',role:'매니저',job:'ae',lv:'LV1',offer:3900,up:8,st:'철회',why:'타사 입사'},
+ {n:'윤태오',team:'콘텐츠팀',pos:'카피라이터',role:'매니저',job:'creative',lv:'LV1',offer:3800,up:7,st:'수락',why:''},
+ {n:'서민재',team:'퍼포먼스본부',pos:'퍼포먼스 마케터',role:'시니어 매니저',job:'ae',lv:'LV3',offer:6400,up:14,st:'오퍼 발송',why:''},
+ {n:'정다온',team:'글로벌본부',pos:'글로벌 마케터',role:'매니저',job:'global',lv:'LV1',offer:4300,up:13,st:'철회',why:'개인 사정'},
+ {n:'문지호',team:'디자인팀',pos:'UX 디자이너',role:'매니저',job:'design',lv:'LV1',offer:4000,up:10,st:'수락',why:''},
+ {n:'강서윤',team:'콘텐츠팀',pos:'콘텐츠 마케터 (경력)',role:'매니저',job:'creative',lv:'LV2',offer:0,up:0,st:'서류 회신',why:'',owner:'채용 담당자',memo:'회신 서류 3종 수령'},
+ {n:'오지후',team:'모션솔루션팀',pos:'모션 디자이너 (경력)',role:'매니저',job:'design',lv:'LV2',offer:0,up:0,st:'최종합격',why:'',owner:'채용 담당자',memo:'다음 주 월요일 처우 자료 요청 예정'},
+].map((o,i)=>({id:'seed'+i,upd:'',...o}));
+const STS=['최종합격','사전정보 요청','서류 회신','컨펌 요청','컨펌 완료','오퍼 발송','조정 요청','수락','철회'],WHY=['','처우','직무·역할','타사 입사','개인 사정'];
+const pcls={'최종합격':'p-new','사전정보 요청':'p-sent','서류 회신':'p-sent','컨펌 요청':'p-adj','컨펌 완료':'p-acc','오퍼 발송':'p-sent','조정 요청':'p-adj','수락':'p-acc','철회':'p-wd'};
+const NEXT_TAB={'최종합격':'pre','사전정보 요청':'reply','서류 회신':'calc','컨펌 요청':'calc','컨펌 완료':'send','오퍼 발송':'send','조정 요청':'calc','수락':'send','철회':'send'};
+let CASES=store.get('cases',null)||JSON.parse(JSON.stringify(SEED));
+let CURID=store.get('curId',null);if(CURID&&!CASES.find(c=>c.id===CURID))CURID=null;
+let RESTORING=false,saveT=null;
+const curCase=()=>CASES.find(c=>c.id===CURID);
+const nowStr=()=>{const d=new Date();return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;};
+const esc=v=>String(v??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function saveCases(){store.set('cases',CASES);store.set('curId',CURID);}
+function caseBar(){const c=curCase();$('#caseBar').innerHTML=c?`작업 중: <b>${esc(c.n)}</b> ${c.pos?`· ${esc(c.pos)}`:''} <span class="pill ${pcls[c.st]}">${c.st}</span><span class="sv">입력 내용 자동 저장 ${c.upd||''}</span>`:'<span class="hint">작업 중인 지원자가 없습니다. 오퍼 현황에서 불러오거나, 1단계에 이름을 입력하면 새로 저장됩니다.</span>';}
+function setSt(st){const c=curCase();if(!c)return;const fi=STS.indexOf(c.st),ti=STS.indexOf(st);
+  const ok=ti>fi||['수락','철회','조정 요청'].includes(st)||(c.st==='조정 요청'&&ti>=STS.indexOf('컨펌 요청'));
+  if(['수락','철회'].includes(c.st)&&!['수락','철회','조정 요청'].includes(st))return;
+  if(ok){c.st=st;if(st!=='철회')c.why='';else if(!c.why)c.why='처우';}c.upd=nowStr();saveCases();caseBar();}
+const FORM_SEL='#tab-pre input[id],#tab-pre select[id],#tab-pre textarea[id],#tab-reply input[id],#tab-reply select[id],#tab-reply textarea[id],#tab-calc input[id],#tab-calc select[id],#tab-calc textarea[id],#tab-send input[id],#tab-send textarea[id]';
+const NO_SAVE=['docFile','docText','slToken','slTo','draft','sAttach'];
+function snapshot(){const v={};$$(FORM_SEL).forEach(e=>{if(e.type==='file'||NO_SAVE.includes(e.id))return;v[e.id]=e.value;});return {v,career:JSON.parse(JSON.stringify(CAREER)),mode:curMode,checks:$$('#pChecks input').map(x=>x.checked),src:SRC.cur,wh:WH_SET};}
+function autosave(){if(RESTORING)return;const nm=($('#cName').value||$('#pName').value||'').trim();let c=curCase();
+  if(!c){if(!nm)return;c={id:'c'+Date.now(),n:nm,st:'최종합격',why:'',offer:0,up:0};CASES.unshift(c);CURID=c.id;}
+  const s=state;Object.assign(c,{n:nm||c.n,team:$('#cTeam').value||c.team||'',pos:$('#pPos').value||c.pos||'',role:$('#cRole').value||c.role||'',lv:$('#cLv').value,job:$('#cJob').value,mail:$('#pMail').value,form:snapshot(),upd:nowStr()});
+  if(s&&s.G&&s.offer){c.offer=s.offer;c.up=s.up;}
+  if($('#sAttach')&&$('#sAttach').dataset.touched)c.sAttach=$('#sAttach').checked;
+  if($('#sLetter')&&$('#sLetter').dataset.touched)c.letterHtml=$('#sLetter').innerHTML;
+  saveCases();caseBar();}
+function queueSave(){clearTimeout(saveT);saveT=setTimeout(autosave,400);}
+document.addEventListener('input',e=>{if(e.target.closest&&e.target.closest('#tab-pre,#tab-reply,#tab-calc,#tab-send'))queueSave();});
+document.addEventListener('change',e=>{if(e.target.closest&&e.target.closest('#tab-pre,#tab-reply,#tab-calc,#tab-send'))queueSave();});
+const ROUTES={'직접 지원':/직접|원티드|잡코리아|사람인|링크드인|홈페이지/,'사내 추천':/사내|추천/,'서치펌':/서치펌|헤드헌/,'다이렉트 소싱':/다이렉트|소싱|스카우트/};
+function guessJob(t){return /디자인|디자이너|design|모션/i.test(t)?'design':/글로벌|global|해외/i.test(t)?'global':/카피|콘텐츠|크리에이티브/i.test(t)?'creative':'ae';}
+function applyMeta(c){const set=(id,v)=>{if(v!==undefined&&v!==null&&$('#'+id))$('#'+id).value=v;};
+  ['pName','rName','cName'].forEach(id=>set(id,c.n));set('pPos',c.pos||'');set('pOwner',c.owner||'');set('pMail',c.mail||'');set('cTeam',c.team||'');set('cRole',c.role||'');
+  if(LVS.includes(c.lv))set('cLv',c.lv);set('cJob',c.job||guessJob((c.pos||'')+' '+(c.team||'')));
+  if(c.route){const r=Object.keys(ROUTES).find(k=>ROUTES[k].test(c.route));$('#cRoute').value=r||'미기재';}
+  if(c.memo)set('cMemo',c.memo);if(c.offer)set('cOffer',c.offer);}
+function loadCase(id,go){const c=CASES.find(x=>x.id===id);if(!c)return;RESTORING=true;
+  clearAll(true);CURID=id;applyMeta(c);
+  if(c.form){Object.entries(c.form.v||{}).forEach(([k,v])=>{const e=$('#'+k);if(e&&e.type!=='file')e.value=v;});
+    if(c.form.mode&&c.form.mode!==curMode)$$('#curMode button')[c.form.mode==='convert'?1:0].click();
+    CAREER=c.form.career||[];SRC.cur=c.form.src||'저장된 값';WH_SET=!!c.form.wh;docsLoaded=!!(c.form.career&&c.form.career.length);
+    $$('#pChecks input').forEach((x,i)=>{x.checked=!!(c.form.checks||[])[i];});
+    ['sDuty','sBenefit','sPosLine','sBoss','sCc','sDue'].forEach(id=>{if(c.form.v&&c.form.v[id])$('#'+id).dataset.touched='1';});}
+  if(typeof c.sAttach==='boolean'){$('#sAttach').checked=c.sAttach;$('#sAttach').dataset.touched='1';}else{$('#sAttach').checked=false;delete $('#sAttach').dataset.touched;}
+  if(c.letterHtml){$('#sLetter').innerHTML=c.letterHtml;$('#sLetter').dataset.touched='1';}else{$('#sLetter').innerHTML='';delete $('#sLetter').dataset.touched;}
+  careerRender();feeVis();preDraft();calc(!c.form&&!c.offer);RESTORING=false;saveCases();caseBar();
+  if(go)document.querySelector(`.tabs [data-tab=${NEXT_TAB[c.st]||'pre'}]`).click();}
+function parseShare(t){const g=k=>{const m=t.match(new RegExp('(?:^|\\n)\\s*'+k+'\\s*[:：]\\s*([^\\n]+)'));return m?m[1].trim():'';};
+  const [r,l]=(g('직책')||'').split('/').map(x=>x.trim());const lv=((l||r||'').match(/LV\s*\d/i)||[''])[0].replace(/\s/g,'').toUpperCase();
+  const pos=g('포지션');
+  return {n:g('이름').replace(/\s*님$/,''),team:g('채용\\s*팀'),pos,role:/LV/i.test(r||'')?'':(r||''),lv,route:g('지원\\s*경로'),owner:g('오퍼\\s*담당자').replace(/^@/,''),memo:g('참고\\s*사항'),job:guessJob(pos)};}
+$('#shareAdd').addEventListener('click',()=>{const t=$('#shareText').value;if(!t.trim()){$('#shareOut').textContent='공유 메시지를 붙여넣어 주세요.';return;}
+  const m=parseShare(t);if(!m.n){$('#shareOut').textContent='‘이름:’ 줄을 찾지 못했습니다.';return;}
+  const c={id:'c'+Date.now(),st:'최종합격',why:'',offer:0,up:0,upd:nowStr(),...m};CASES.unshift(c);saveCases();$('#shareText').value='';
+  $('#shareOut').textContent=`${m.n}님을 등록했습니다 (${[m.team,m.role&&m.lv?m.role+' / '+m.lv:m.lv,m.route].filter(Boolean).join(' · ')}).`;renderTrack();});
+function renderTrack(){
+  const done=CASES.filter(o=>o.st==='수락'||o.st==='철회'),acc=CASES.filter(o=>o.st==='수락'),ing=CASES.filter(o=>!['수락','철회'].includes(o.st));
+  const rate=done.length?Math.round(acc.length/done.length*100):0;const ups=CASES.filter(o=>o.up);
+  const avgUp=ups.length?(ups.reduce((a,o)=>a+o.up,0)/ups.length).toFixed(1):0;
+  $('#tStats').innerHTML=`<div><b>${CASES.length}명</b><span>전체 지원자</span></div><div><b>${ing.length}명</b><span>진행 중 (오퍼 전·회신 대기)</span></div><div><b>${rate}%</b><span>수락률 (결정된 건 기준)</span></div><div><b>+${avgUp}%</b><span>평균 인상률</span></div>`;
+  $('#tTbl').innerHTML='<tr><th>이름</th><th>조직·포지션</th><th>레벨</th><th>제안</th><th>상태</th><th>철회 사유</th><th></th></tr>'+CASES.map((o,i)=>`<tr${o.id===CURID?' style="background:var(--tint)"':''}><td><b>${esc(o.n)}</b><br><span class="hint">${o.upd||''}</span></td><td>${esc(o.team||'')}<br><span class="hint">${esc(o.pos||JOBS[o.job]||'')}</span></td><td>${o.lv||'-'}</td><td>${o.offer?f(o.offer)+(o.up?`<br><span class="hint">+${o.up}%</span>`:''):'-'}</td>
+    <td><select data-i="${i}" data-k="st" aria-label="${esc(o.n)} 상태">${STS.map(s=>`<option${s===o.st?' selected':''}>${s}</option>`).join('')}</select></td>
+    <td><select data-i="${i}" data-k="why" aria-label="${esc(o.n)} 철회 사유" ${o.st==='철회'?'':'disabled'}>${WHY.map(w=>`<option value="${w}"${w===o.why?' selected':''}>${w||'-'}</option>`).join('')}</select></td>
+    <td style="white-space:nowrap"><button class="btn${['수락','철회'].includes(o.st)?'':' primary'}" data-load="${o.id}">불러오기</button> <button class="btn" data-del="${o.id}" aria-label="${esc(o.n)} 삭제">×</button></td></tr>`).join('');
+  $$('#tTbl select').forEach(s=>s.addEventListener('change',()=>{const o=CASES[+s.dataset.i];o[s.dataset.k]=s.value;if(s.dataset.k==='st'&&s.value!=='철회')o.why='';if(s.dataset.k==='st'&&s.value==='철회'&&!o.why)o.why='처우';o.upd=nowStr();saveCases();caseBar();renderTrack();}));
+  $$('#tTbl [data-load]').forEach(b=>b.addEventListener('click',()=>loadCase(b.dataset.load,true)));
+  $$('#tTbl [data-del]').forEach(b=>b.addEventListener('click',()=>{const o=CASES.find(x=>x.id===b.dataset.del);if(!confirm(`${o.n}님 기록을 목록에서 지울까요?`))return;CASES=CASES.filter(x=>x!==o);if(CURID===o.id)CURID=null;saveCases();caseBar();renderTrack();}));
+  const wd=CASES.filter(o=>o.st==='철회'),cnt={};wd.forEach(o=>cnt[o.why||'미기재']=(cnt[o.why||'미기재']||0)+1);
+  const mx=Math.max(1,...Object.values(cnt));
+  $('#tBars').innerHTML=wd.length?Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="b"><span>${k}</span><i style="width:${v/mx*100}%"></i><span>${v}건</span></div>`).join(''):'<span class="hint">철회된 오퍼가 없습니다.</span>';
+  const re=wd.filter(o=>o.why==='개인 사정'||o.why==='타사 입사');
+  $('#tRe').textContent=re.length?re.map(o=>`${o.n}(${o.why})`).join(', ')+' · 6개월 뒤 연락해 재지원 의사를 확인합니다.':'대상이 없습니다.';
+}
+$('#saveBtn').addEventListener('click',()=>{const s=state;if(!s.G){$('#toast').textContent='오퍼 대상이 아니라 다음 단계로 갈 수 없습니다.';return;}
+  autosave();setSt('컨펌 완료');document.querySelector('.tabs [data-tab=send]').click();});
+$('#resetBtn').addEventListener('click',()=>{if(!confirm('직접 등록한 지원자도 지워지고 예시 목록으로 돌아갑니다. 계속할까요?'))return;CASES=JSON.parse(JSON.stringify(SEED));CURID=null;saveCases();caseBar();renderTrack();});
+
+// ===== step 4: offer letter + 입사 제안 메일 =====
+const BENEFIT0='## 복지포인트\n매월 기본 복지포인트 10만 원, 연간 120만 원 상당 (분야별 최소한의 제한 외 현금에 준하여 사용 가능)\n생일 축하 5만 원(복지포인트), 생일자 2시간 조기퇴근\n설·추석 명절, 1년 만근 축하 각 10만 원, 총 30만 원(복지포인트)\n## 장기근속\n3년 만근 시 리프레시 휴가 2주 + 휴가 지원비 150만 원\n5년 만근 시 리프레시 휴가 4주 + 휴가 지원비 150만 원 (개인 연차와 별개로 추가 지급)\n## 생활·건강\n주택자금 대출이자 지원 (직급별 3,000만 원~최대 1억 원)\n종합건강검진 지원\n## 근무 환경\n재택근무·인근근무·자율출퇴근 등 유연근무제 운영\n각종 사내 이벤트 등 다양한 복리후생';
+function renderBenefits(text,esc2){const lines=(text||'').split('\n').map(x=>x.trim()).filter(Boolean);let html='',open=false;
+  lines.forEach(l=>{if(/^##\s*/.test(l)){if(open){html+='</ul>';open=false;}html+=`<p style="margin:10px 0 2px;font-weight:700">${esc2(l.replace(/^##\s*/,''))}</p>`;}
+    else{if(!open){html+='<ul style="margin:2px 0 4px 18px;padding:0">';open=true;}html+=`<li>${esc2(l)}</li>`;}});
+  if(open)html+='</ul>';return html;}
+let SEND_HTML='',LETTER_HTML='';
+const ro=w=>{const c=(w||'').trim().slice(-1),k=c.charCodeAt(0)-0xAC00;if(k>=0&&k<11172){const j=k%28;return j===0||j===8?'로':'으로';}return /[013678]$/.test(c)?'으로':'로';};
+const eun=w=>{const c=(w||'').trim().slice(-1),k=c.charCodeAt(0)-0xAC00;if(k>=0&&k<11172)return k%28===0?'는':'은';return '은';};
+const kdate=v=>{const d=D(v);return d?`${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`:'(미정)';};
+function toggleAttachUI(){const on=$('#sAttach').checked;$('#letterWrap').hidden=!on;$('#sPrint').hidden=!on;$('#sPrintHint').hidden=!on;}
+function sendOpen(){const co=$('#pCo').value||'라이트하우스',team=$('#cTeam').value,role=$('#cRole').value,pos=$('#pPos').value||JOBS[$('#cJob').value];
+  const fill=(id,v)=>{const e=$('#'+id);if(!e.dataset.touched||!e.value)e.value=v;};
+  if(!$('#sAttach').dataset.touched)$('#sAttach').checked=$('#cLv').value==='LV4'||/리드|lead|팀장/i.test(role||'');
+  toggleAttachUI();
+  fill('sMail',$('#pMail').value);fill('sDate',$('#cDate').value||$('#sDate').value);fill('sOffer',$('#cOffer').value);fill('sWelcome',$('#cWelcome').value||0);
+  fill('sPosLine',`${co} ${team} ${role}`.replace(/\s+/g,' ').trim());
+  fill('sDuty',[`${team||co} ${role||'구성원'}${ro(role||'구성원')}서 ${pos} 업무 전반`,`${team||'소속 조직'} 운영에 필요한 업무`,'기타 객관적이며 합리적인 범위 안에서 경영진이 요청하는 업무'].join('\n'));
+  if(!$('#sBenefit').value)$('#sBenefit').value=store.get('benefits',BENEFIT0);
+  if(!$('#sDue').value){const d=new Date();d.setDate(d.getDate()+3);$('#sDue').value=ymd(d);}
+  renderSend();}
+$('#sAttach').addEventListener('change',()=>{$('#sAttach').dataset.touched='1';toggleAttachUI();renderSend();});
+$('#sLetterReset').addEventListener('click',()=>{delete $('#sLetter').dataset.touched;renderSend();$('#sToast').textContent='자동 생성 내용으로 되돌렸습니다.';});
+$('#sLetter').addEventListener('input',()=>{$('#sLetter').dataset.touched='1';});
+function renderSend(){const co=$('#pCo').value||'라이트하우스',n=$('#cName').value||'지원자',dt=$('#sDate').value,off=+$('#sOffer').value||0,wel=+$('#sWelcome').value||0;
+  const d=D(dt),endY=d?(d.getMonth()>=9?d.getFullYear()+1:d.getFullYear()):new Date().getFullYear();
+  const lines=v=>v.split('\n').map(x=>x.trim()).filter(Boolean);
+  const prob=+$('#sProbation').value||0,probSame=$('#sProbationPay').value==='same';
+  $('#sSubj').value=`[${co}] ${n}님, ${co}에서의 새로운 시작을 제안드립니다`;
+  SEND_HTML=`<div style="font-family:'Malgun Gothic',sans-serif;font-size:14px;color:#222;line-height:1.8">
+<p>안녕하세요, <b>${esc(n)}</b> 님.<br>${esc(co)} 인사팀입니다.</p>
+<p>${esc(n)} 님과 함께하고 싶은 마음을 담아, 아래와 같이 처우를 제안드립니다. 긍정적으로 검토해 주시면 감사하겠습니다.</p>
+<p style="font-weight:700;margin:16px 0 2px">Position</p>
+<p style="margin:0 0 10px">${esc($('#sPosLine').value)}</p>
+<p style="font-weight:700;margin:16px 0 2px">Compensation Package</p>
+<ul style="margin:2px 0 10px 18px;padding:0">
+<li>기본연봉 ${f(off)}만 원 (기본급·식대 및 제수당 포함 금액, 성과급 별도)</li>
+${wel?`<li>웰컴보너스 ${f(wel)}만 원</li>`:''}
+${prob?`<li>수습(시용) 기간 ${prob}개월 (수습 기간 중 급여 ${probSame?'차등 없음':'일부 차감'})</li>`:''}
+<li>성과급 반기별 성과급, ${prob?'수습(시용) 종료 시점부터 산정':'입사 시점부터 산정'}</li>
+<li>회신 기한 ${kdate($('#sDue').value)}</li>
+</ul>
+${prob?`<p style="font-weight:700;margin:16px 0 2px">수습 기간 안내</p><p style="margin:0 0 10px">수습 ${prob}개월 동안 직무 및 조직 적합성을 서로 맞춰 나가며 피드백을 진행하고, 수습 기간 만료 시점에 평정을 통해 정직원 전환 여부를 결정합니다.</p>`:''}
+<p style="font-weight:700;margin:16px 0 2px">반기별 성과급 안내</p>
+<p style="margin:0 0 10px">${esc(co)}${eun(co)} 회사의 성과를 구성원들과 공유하는 가치를 중시하며, 반기별 성과급 제도를 운영하고 있습니다. 책정 기준은 회사의 경영 성과, 소속 부서의 이익, 개인의 성과 및 기여도를 종합적으로 고려하여 시즌별로 책정하며, 구체적인 금액 및 지급 여부는 회사의 정책과 재량에 따라 달라질 수 있습니다.</p>
+<p style="font-weight:700;margin:16px 0 2px">복리후생</p>
+${renderBenefits($('#sBenefit').value,esc)}
+<p style="font-weight:700;margin:16px 0 2px">오퍼를 수락하신다면</p>
+<p style="margin:0 0 6px">회신 시 <b>입사 가능한 일정</b>을 함께 보내주세요.</p>
+<p style="margin:0 0 10px">수락 여부는 <b>${kdate($('#sDue').value)}</b>까지 이 메일로 회신 부탁드립니다.</p>
+<p>${esc(n)} 님과 함께하게 되기를 기대합니다. 문의 사항은 편하게 본 메일로 회신해 주시기 바랍니다.</p>
+<p>감사합니다.<br>${esc(co)} 인사팀 드림</p>
+${$('#sAttach').checked?`<p style="color:#666">※ 자세한 조건은 첨부한 Offer Letter에서도 확인하실 수 있습니다.</p>`:''}
+</div>`;
+  $('#sPreview').innerHTML=SEND_HTML;
+  if($('#sLetter').dataset.touched)return;
+  LETTER_HTML=`<h2>Offer Letter</h2><p style="text-align:right;margin:0 0 10px">${kdate(ymd(new Date()))}</p><p><b>수신인:</b> ${esc(n)} 님</p>
+<p>${esc(co)}(이하 “당사”)는 ${esc(n)} 님에 대한 채용 제안을 확정하기 위해 다음과 같이 Offer Letter를 보내드립니다. 주요 채용 조건은 아래와 같습니다.</p>
+<ul><li><b>대상자:</b> ${esc(n)} 님</li><li><b>입사 예정일:</b> ${kdate(dt)} (입사 제안 수락 시 협의를 통해 확정)</li><li><b>직위/직책:</b> ${esc($('#sPosLine').value)}</li>
+<li><b>주요 직무:</b><ul>${lines($('#sDuty').value).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></li>
+<li><b>계약 연봉 (대상 기간):</b> 기본급 ${f(off)}만 원 (입사 시점 ~ ${endY}년 말)${wel?` · 웰컴보너스 ${f(wel)}만 원`:''}</li>
+<li><b>기타:</b>${renderBenefits($('#sBenefit').value,esc)}</li>
+<li><b>책임자(연락처):</b> ${esc($('#sBoss').value)}</li></ul>
+<p>당사는 귀하께서 본 채용 제안을 수락하시기를 희망하며, 수락하시는 경우 아래 서명란에 서명하여 원본 또는 스캔본을 책임자에게 제출해 주시기 바랍니다.</p>
+<p style="margin-top:22px">서명: ____________ &nbsp; 이름: ____________</p><p style="text-align:right;font-weight:700">${esc(co)}</p>`;
+  $('#sLetter').innerHTML=LETTER_HTML;}
+$$('#tab-send input,#tab-send textarea').forEach(e=>e.addEventListener('input',()=>{e.dataset.touched='1';if(e.id==='sBenefit')store.set('benefits',e.value);renderSend();}));
+function sendText(){const t=document.createElement('div');t.innerHTML=SEND_HTML.replace(/<\/(p|tr)>/g,'\n').replace(/<\/td>/g,'  ');return t.textContent.replace(/\n{3,}/g,'\n\n').trim();}
+async function copySend(){try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([SEND_HTML],{type:'text/html'}),'text/plain':new Blob([sendText()],{type:'text/plain'})})]);return true;}catch(e){try{await navigator.clipboard.writeText(sendText());return true;}catch(e2){return false;}}}
+function sentOffer(how){setSt('오퍼 발송');autosave();$('#sToast').textContent=`${how}: 본문을 복사했습니다. ${$('#sAttach').checked?'붙여넣고 오퍼 레터 PDF를 첨부해':'붙여넣어'} 보내 주세요. 상태를 ‘오퍼 발송’으로 바꿨습니다.`;}
+$('#sSendMail').addEventListener('click',async()=>{const to=$('#sMail').value.trim();if(!to){$('#sToast').textContent='지원자 이메일을 입력해 주세요.';return;}await copySend();const cc=$('#sCc').value.trim();
+  location.href=`mailto:${encodeURIComponent(to)}?${cc?`cc=${encodeURIComponent(cc)}&`:''}subject=${encodeURIComponent($('#sSubj').value)}`;sentOffer('메일 앱');});
+$('#sSendGmail').addEventListener('click',async()=>{const to=$('#sMail').value.trim();if(!to){$('#sToast').textContent='지원자 이메일을 입력해 주세요.';return;}await copySend();const cc=$('#sCc').value.trim();
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(to)}${cc?`&cc=${encodeURIComponent(cc)}`:''}&su=${encodeURIComponent($('#sSubj').value)}`,'_blank','noopener');sentOffer('Gmail');});
+$('#sCopy').addEventListener('click',async()=>{const ok=await copySend();$('#sToast').textContent=ok?'메일 본문을 복사했습니다.':'복사가 막혔습니다. 미리보기를 드래그해 복사해 주세요.';});
+$('#sPrint').addEventListener('click',()=>{const w=window.open('','_blank');if(!w){$('#sToast').textContent='팝업이 막혔습니다. 팝업을 허용해 주세요.';return;}
+  w.document.write(`<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>Offer Letter_${esc($('#cName').value)}</title><style>body{font-family:'Malgun Gothic',sans-serif;font-size:13.5px;line-height:1.8;color:#222;max-width:720px;margin:40px auto;padding:0 24px}h2{text-align:center;font-size:24px;letter-spacing:.04em}ul{margin:2px 0 6px 20px;padding:0}</style></head><body>${$('#sLetter').innerHTML}<script>onload=()=>print()<\/script></body></html>`);w.document.close();});
+$$('#tab-send [data-res]').forEach(b=>b.addEventListener('click',()=>{const c=curCase();if(!c){$('#sToast').textContent='오퍼 현황에서 지원자를 먼저 불러와 주세요.';return;}setSt(b.dataset.res);$('#sToast').textContent=`상태를 ‘${b.dataset.res}’(으)로 바꿨습니다.`+(b.dataset.res==='철회'?' 철회 사유는 오퍼 현황에서 고르세요.':'');}));
+
+// rules
+function renderRules(){
+  $('#bTbl').innerHTML='<tr><th>직군</th>'+LVS.map(l=>`<th>${l} 하한</th><th>${l} 상한</th>`).join('')+'</tr>'+Object.keys(JOBS).map(j=>`<tr><td>${JOBS[j]}</td>`+LVS.map(l=>[0,1].map(k=>`<td><input type="number" step="50" data-j="${j}" data-l="${l}" data-k="${k}" value="${BANDS[j][l][k]}" aria-label="${JOBS[j]} ${l} ${k?'상한':'하한'}"></td>`).join('')).join('')+'</tr>').join('');
+  $('#gTbl').innerHTML='<tr><th>등급</th><th>면접 평균 이상</th><th>중심값(%)</th><th>허용 하한</th><th>허용 상한</th><th>설계 의도</th></tr>'+GRADES.map((g,i)=>`<tr><td>${g.g}<br><span class="hint">${g.name||''}</span></td><td><input type="number" step="0.5" data-gi="${i}" data-gk="min" value="${g.min}" aria-label="${g.g} 평점"></td><td><input type="number" data-gi="${i}" data-gk="c" value="${g.c??''}" aria-label="${g.g} 중심값"></td><td><input type="number" data-gi="${i}" data-gk="lo" value="${g.lo}" aria-label="${g.g} 하한"></td><td><input type="number" data-gi="${i}" data-gk="hi" value="${g.hi}" aria-label="${g.g} 상한"></td><td style="white-space:normal">${g.why}</td></tr>`).join('');
+  $$('#bTbl input').forEach(x=>x.addEventListener('change',()=>{BANDS[x.dataset.j][x.dataset.l][+x.dataset.k]=+x.value;store.set('bands',BANDS);calc(true);}));
+  $$('#gTbl input').forEach(x=>x.addEventListener('change',()=>{GRADES[+x.dataset.gi][x.dataset.gk]=+x.value;store.set('grades2',GRADES);calc(true);}));
+}
+$('#ruleReset').addEventListener('click',()=>{BANDS=JSON.parse(JSON.stringify(BANDS0));GRADES=JSON.parse(JSON.stringify(GRADES0));store.set('bands',BANDS);store.set('grades2',GRADES);renderRules();calc(true);});
+renderRules();calc(true);
+
+// pre-offer info request
+const PREV_Y=new Date().getFullYear()-1;
+const DOCS=[`${PREV_Y}년도 원천징수영수증 또는 원천징수부`,'최근 3개월 급여명세서 (연봉계약서 대체 가능)','전체 직장 경력증명서 (건강보험자격득실확인서 대체 가능)','성과급 또는 인센티브 수령 내역 (해당자에 한함)'];
+const ANS=['연봉·성과급','연봉 외 수당','희망 연봉','총 경력기간','입사 가능일'];
+const CAREER_DEMO=[{c:'A사',s:'2021-01-04',e:'2023-03-31',ex:false},{c:'B사 (인턴)',s:'2023-04-03',e:'2023-09-29',ex:true},{c:'C사',s:'2023-10-04',e:'2026-05-11',ex:false}];
+let CAREER=[];
+const CHECK=[
+ ['최종 연봉 및 성과급','재직 중인(혹은 최근 재직한) 직장의 연봉(기본급)과 성과급(인센티브) 수준'],
+ ['연봉 외 수당','연봉/성과급 외 별도 수당(예: 식대, 통신비 지원금 등)이 있다면 기재<br>해당 사항이 없으면 "없음"으로 기재'],
+ ['희망 연봉 (optional)','기대하는 수준의 연봉, 성과급 기준'],
+ ['총 경력기간','근무하신 모든 직장명과 근무 기간을 월(개월 수) 단위까지 포함하여 적어 주세요. (단, 인턴 근무 기간은 제외)<br>예) A사 2년 3개월, B사 1년 6개월 (총 3년 9개월)'],
+ ['입사 가능일','합류 가능한 가장 빠른 시점<br>예) 11월 16일 이후']];
+let MAIL_HTML='';
+function preDraft(){
+  const n=$('#pName').value||'지원자',own=$('#pOwner').value||'담당자',co=$('#pCo').value||'라이트하우스';
+  $('#pSubj').value=`[${co}] Compensation 관련 사전 정보 요청 (${n} 님)`;
+  const td='border:1px solid #bfbfbf;padding:8px 10px;vertical-align:top;';
+  MAIL_HTML=`<div style="font-family:'Malgun Gothic',sans-serif;font-size:14px;color:#222;line-height:1.7">
+<p>안녕하세요, ${n} 님.<br>저는 ${co} 인사본부 채용팀 ${own}입니다.<br>인터뷰에 참여해 주셔서 감사합니다.</p>
+<p>최종 단계 검토를 위해 아래 사항을 확인하고자 합니다.<br>제출해 주신 정보는 처우 검토 목적으로만 활용되며, 본 요청이 채용 확정을 의미하지는 않습니다.</p>
+<table style="border-collapse:collapse;width:100%;max-width:720px;font-size:13.5px">
+<tr><td colspan="2" style="${td}background:#1f3a64;color:#fff;font-weight:bold">Check List</td></tr>
+${CHECK.map(([k,d])=>`<tr><td style="${td}background:#e7e6e6;font-weight:bold;width:150px">${k}</td><td style="${td}">${d}<br>: </td></tr>`).join('\n')}
+</table>
+<p style="margin:18px 0 6px"><b>증빙 서류</b><br>아래 서류를 회신 메일에 첨부해 주세요.</p>
+<ol style="margin:0 0 0 18px;padding:0">${DOCS.map((d,i)=>`<li>${d}${i===3?'<br><span style="color:#666">성과급 포함 급여명세서 또는 지급 확인서 등</span>':''}</li>`).join('')}</ol>
+<p>증빙 서류 준비에 시일이 걸린다면, 체크리스트만 먼저 답변해 주신 후 서류는 추후 제출해 주셔도 무방합니다.</p>
+<p>문의 사항은 본 메일로 회신해 주시기 바랍니다.<br>감사합니다.</p>
+<p>${own} 드림<br>${co} 인사본부 채용팀</p></div>`;
+  $('#pPreview').innerHTML=MAIL_HTML;
+  const strip=x=>x.replace(/<br>/g,'\n').replace(/<[^>]+>/g,'');
+  $('#pDraft').value=`안녕하세요, ${n} 님.
+저는 ${co} 인사본부 채용팀 ${own}입니다.
+인터뷰에 참여해 주셔서 감사합니다.
+
+최종 단계 검토를 위해 아래 사항을 확인하고자 합니다.
+제출해 주신 정보는 처우 검토 목적으로만 활용되며, 본 요청이 채용 확정을 의미하지는 않습니다.
+
+[Check List]
+${CHECK.map(([k,d])=>`■ ${k}\n${strip(d)}\n: `).join('\n\n')}
+
+[증빙 서류] 아래 서류를 회신 메일에 첨부해 주세요.
+${DOCS.map((d,i)=>`${i+1}. ${d}${i===3?'\n   성과급 포함 급여명세서 또는 지급 확인서 등':''}`).join('\n')}
+
+증빙 서류 준비에 시일이 걸린다면, 체크리스트만 먼저 답변해 주신 후 서류는 추후 제출해 주셔도 무방합니다.
+문의 사항은 본 메일로 회신해 주시기 바랍니다.
+감사합니다.
+
+${own} 드림
+${co} 인사본부 채용팀`;
+}
+async function copyRich(){try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([MAIL_HTML],{type:'text/html'}),'text/plain':new Blob([$('#pDraft').value],{type:'text/plain'})})]);return true;}catch(e){try{const r=document.createRange();r.selectNodeContents($('#pPreview'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);const ok=document.execCommand('copy');sel.removeAllRanges();return ok;}catch(e2){return false;}}}
+function preChecks(){
+  const saved=store.get('preChecks',{});
+  $('#pChecks').innerHTML=[...ANS.map(a=>['답변',a]),...DOCS.map(d=>['서류',d])].map(([k,t],i)=>`<label style="display:flex;gap:8px;align-items:center;font-size:14px;padding:3px 0"><input type="checkbox" data-i="${i}" ${saved[i]?'checked':''} style="width:auto"> <span class="pill ${k==='서류'?'p-adj':'p-sent'}">${k}</span> ${t}</label>`).join('')+`<div class="hint" id="pProg" style="margin-top:6px"></div>`;
+  const upd=()=>{const all=$$('#pChecks input');const done=all.filter(x=>x.checked).length;const docs=all.slice(ANS.length).filter(x=>x.checked).length;
+    $('#pProg').textContent=`${done}/${all.length} 받음`+(docs<DOCS.length?` · 서류 ${DOCS.length-docs}건 대기 (산정은 먼저 진행 가능, 승인 전 확인)`:' · 서류 모두 받음');
+    const st={};all.forEach(x=>st[x.dataset.i]=x.checked);store.set('preChecks',st);};
+  $$('#pChecks input').forEach(x=>x.addEventListener('change',upd));upd();
+}
+function monthsBetween(s,e){const a=D(s),b=D(e)||new Date();if(!a||b<a)return 0;let m=(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());if(b.getDate()+1<a.getDate())m--;return Math.max(0,m);}
+const ym=t=>`${Math.floor(t/12)}년 ${t%12}개월`;
+function careerRender(){
+  $('#pCareer').innerHTML=CAREER.map((r,i)=>`<div class="career-row${r.ex?' ex':''}"><input value="${r.c}" data-i="${i}" data-k="c" aria-label="회사명" placeholder="회사명"><input type="date" value="${r.s}" data-i="${i}" data-k="s" aria-label="입사일"><input type="date" value="${r.e}" data-i="${i}" data-k="e" aria-label="퇴사일(재직 중이면 비움)"><span class="dur">${ym(monthsBetween(r.s,r.e))}</span><label class="hint" style="display:flex;gap:4px;align-items:center;white-space:nowrap"><input type="checkbox" data-x="${i}" ${r.ex?'checked':''} style="width:auto">제외</label><button class="btn" data-del="${i}" aria-label="삭제" style="padding:4px 10px">×</button></div>`).join('')||'<div class="hint">경력이 없습니다. 서류를 불러오거나 직장을 추가하세요.</div>';
+  $$('#pCareer input[data-k]').forEach(x=>x.addEventListener('change',()=>{CAREER[+x.dataset.i][x.dataset.k]=x.value;careerRender();}));
+  $$('#pCareer input[data-x]').forEach(x=>x.addEventListener('change',()=>{CAREER[+x.dataset.x].ex=x.checked;careerRender();}));
+  $$('#pCareer [data-del]').forEach(b=>b.addEventListener('click',()=>{CAREER.splice(+b.dataset.del,1);careerRender();}));
+  careerTotal();
+}
+function careerTotal(){const inc=CAREER.filter(r=>!r.ex),t=inc.reduce((a,r)=>a+monthsBetween(r.s,r.e),0),ex=CAREER.length-inc.length;$('#pTotal').textContent=`총 ${ym(t)}`+(ex?` (제외 ${ex}건 빼고 계산)`:'');return t;}
+$('#pAddRow').addEventListener('click',()=>{CAREER.push({c:'',s:'',e:'',ex:false});careerRender();});
+
+// ----- document reader (browser only, heuristic) -----
+const DATE_RE=/(\d{4})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})\s*일?/g;
+const toISO=(y,m,d)=>`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+let pdfjsReady=null;let docsLoaded=false;var WH_SET=false;var SRC={cur:'직접 입력'};
+function clearSamples(){['pCur','pBonus','pAllow','pWant','cInc','cSal','cMeal','cWhBonus','cJoin','cLeave','cCur','cBonus','cWant','cMemo','cNow','cCareer','cAllow','cAvail'].forEach(id=>{const e=$('#'+id);if(e)e.value='';});CAREER=[];careerRender();$('#cScores').value='';preDraft();}
+function startDocs(){if(!docsLoaded){docsLoaded=true;clearSamples();$('#docOut').insertAdjacentHTML('afterbegin','<div class="doc-card hint">불러온 서류 기준으로 채웁니다. 희망 연봉·면접 점수는 직접 입력해 주세요.</div>');}}
+function loadPdfjs(){if(pdfjsReady)return pdfjsReady;pdfjsReady=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';sc.onload=()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';res(window.pdfjsLib);};sc.onerror=()=>rej(new Error('PDF 읽기 도구를 불러오지 못했습니다.'));document.head.appendChild(sc);});return pdfjsReady;}
+async function pdfText(file,password){
+  const lib=await loadPdfjs();const opts={data:await file.arrayBuffer()};if(password)opts.password=password;
+  const doc=await lib.getDocument(opts).promise;const lines=[];
+  const joinRow=items=>{let line='',prevEnd=null;
+    items.forEach(it=>{const x=it.transform[4],w=it.width||(it.str.length*Math.abs(it.transform[0]||10));
+      if(prevEnd!==null){const gap=x-prevEnd;const charW=Math.abs(it.transform[0]||10)*0.55;if(gap>charW||/^\s/.test(it.str))line+=' ';}
+      line+=it.str;prevEnd=x+w;});
+    return line.replace(/\s+/g,' ').trim();};
+  for(let p=1;p<=doc.numPages;p++){const tc=await (await doc.getPage(p)).getTextContent();const rows={};
+    tc.items.forEach(it=>{const y=Math.round(it.transform[5]/3)*3;(rows[y]=rows[y]||[]).push(it);});
+    Object.keys(rows).map(Number).sort((a,b)=>b-a).forEach(y=>lines.push(joinRow(rows[y].sort((a,b)=>a.transform[4]-b.transform[4]))));}
+  return lines.filter(Boolean).join('\n');
+}
+function detect(t){if(/자격\s*득\s*실/.test(t))return 'health';if(/경\s*력\s*증\s*명/.test(t))return 'cert';if(/원천\s*징수\s*영\s*수\s*증|원천\s*징수\s*부|근로\s*소득\s*지급\s*명세/.test(t))return 'wh';if(/(급\s*여|임\s*금|월\s*급)\s*명\s*세|급여\s*지급|지급\s*내역|지급\s*합계|지급\s*총액|실\s*지\s*급|기\s*본\s*급/.test(t))return 'pay';if(/원천\s*징수/.test(t))return 'wh';return 'unknown';}
+// payslip: works for 'label amount' on one line and for table layout (labels row, amounts row below)
+function payAmounts(t){const L=t.split('\n').map(x=>x.trim()).filter(Boolean);const KEYS={base:/^기\s*본\s*급|^기본\s*연봉|^기본\s*월급|^본\s*봉/,meal:/^식\s*대|^중\s*식\s*대/,ot:/고정\s*(연장|OT|시간외)|연장\s*근로|시간\s*외|^연장\s*수당/,total:/지급\s*(합계|총액|계)|총\s*지급|급여\s*총액/};
+  const money=x=>[...x.matchAll(/(\d{1,3}(?:,\d{3})+|\d{5,})(?!\s*(?:년|월|일|시간|%))/g)].map(m=>+m[1].replace(/,/g,'')).filter(v=>v>=10000&&v<100000000);
+  const out={base:[],meal:[],ot:[],total:[]};
+  L.forEach((line,i)=>{const toks=line.split(/\s{1,}|\t|\|/).filter(Boolean);
+    // same line: label then amount
+    Object.entries(KEYS).forEach(([k,re])=>{const idx=line.search(new RegExp(re.source.replace(/\^/g,'')));if(idx<0)return;const seg=line.slice(idx).replace(/^[^\d]*/,'');const v=money(seg)[0];if(v&&/^[\d,]/.test(seg))out[k].push(v);});
+    // table: this line is labels only, the next line (skipping a short section-header line like '합계') has amounts, 1:1 by column, zeros included
+    if(!money(line).length&&Object.values(KEYS).some(re=>toks.some(x=>re.test(x)))){
+      let j=i+1;while(j<L.length&&j<i+3&&!/\d/.test(L[j]||'')&&(L[j]||'').length<=6)j++;
+      const vline=L[j];if(!vline)return;
+      const labs=toks.filter(x=>/[가-힣]/.test(x));
+      const valToks=vline.trim().split(/\s{1,}|\t|\|/).filter(x=>/^-?[\d,]+원?$/.test(x)).map(x=>+x.replace(/[,원]/g,''));
+      if(valToks.length&&Math.abs(valToks.length-labs.length)<=1)labs.forEach((lb,k)=>{const v=valToks[k];if(v===undefined||isNaN(v))return;Object.entries(KEYS).forEach(([kk,re])=>{if(re.test(lb))out[kk].push(v);});});}
+  });
+  const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+  const months=new Set([...t.matchAll(/(\d{4})\s*[년.\-\/]\s*(\d{1,2})\s*월?\s*(?:분|급여|귀속)/g)].map(m=>m[1]+'-'+m[2]));
+  return {base:avg(out.base),meal:avg(out.meal),ot:avg(out.ot),total:avg(out.total),n:Math.max(1,months.size,out.base.length)};}
+const NAMES={health:'건강보험 자격득실확인서',wh:'원천징수영수증',cert:'경력증명서',pay:'급여명세서',unknown:'알 수 없는 서류'};
+function parseCareer(t){
+  const out=[];
+  t.split('\n').forEach(line=>{
+    const nonWork=(line.match(/지역\s*세대원|지역\s*세대주|지역\s*가입자|피부양자|임의\s*계속/)||[''])[0].replace(/\s+/g,'');
+    const ds=[...line.matchAll(DATE_RE)];if(!ds.length)return;
+    let name=line.slice(0,ds[0].index).replace(/직장\s*가입자|가입자\s*구분|사업장\s*명칭|자격\s*취득일|자격\s*상실일|취득일|상실일|근무\s*기간|회사명|발급일|출력일|[0-9\-.,~:]/g,' ').replace(/\(\s*\)/g,' ').replace(/\s+/g,' ').trim();
+    if(/발급|출력|조회|생년월일|주민/.test(line))return;
+    if(nonWork){name=name.replace(/지역\s*세대원|지역\s*세대주|지역\s*가입자|피부양자|임의\s*계속|-/g,' ').replace(/\s+/g,' ').trim();name=(name&&name.length>=2?name+' ':'')+`(${nonWork})`;}
+    else if(!name||name.length<2)return;
+    out.push({c:name,s:toISO(...ds[0].slice(1,4)),e:ds[1]?toISO(...ds[1].slice(1,4)):'',ex:!!nonWork||/인턴|아르바이트|현장실습/.test(name)});
+  });
+  return out;
+}
+const MONEY_RE=/(\d{1,3}(?:,\d{3})+|\d{5,})/g;
+function moneyAfter(t,keys){for(const k of keys){const i=t.search(k);if(i<0)continue;const seg=t.slice(i,i+120);const m=[...seg.matchAll(MONEY_RE)].map(x=>+x[1].replace(/,/g,'')).find(v=>v>=100000);if(m)return m;}return 0;}
+function handleText(t,label){
+  startDocs();
+  const kind=detect(t);
+  {const nm=t.match(/성\s*명\s*[:：]?\s*([가-힣]{2,4})(?![가-힣])/);if(nm&&!$('#pName').value){setName(nm[1]);}}let html=`<div class="doc-card"><b>${label}</b> · ${NAMES[kind]}<br>`;const found=[];
+  if(kind==='health'||kind==='cert'){const rows=parseCareer(t);
+    if(rows.length){CAREER=rows;careerRender();found.push(`경력 ${rows.length}건을 불러와 총 경력을 다시 계산했습니다.`+(rows.some(r=>r.ex)?` 지역세대원·지역가입자·피부양자·인턴으로 보이는 ${rows.filter(r=>r.ex).length}건은 '제외'로 표시했습니다.`:'')+` 빼야 할 경력은 '제외'에 체크하거나 삭제하세요.`);
+      const last=[...rows].filter(r=>!r.ex).sort((a,b)=>(b.s>a.s?1:-1))[0];if(last&&!WH_SET){$('#cJoin').value=last.s;$('#cLeave').value=last.e||ymd(new Date());found.push(`원천징수영수증이 없어 최근 직장(${last.c}) 입사일 ${last.s}~${last.e||'오늘'}을 환산 기간으로 넣었습니다.`);}else if(last)found.push(`최근 직장: ${last.c} (환산 기간은 원천징수영수증의 근무기간을 그대로 씁니다)`);}
+    else found.push('경력 행을 찾지 못했습니다. 아래 표에 직접 입력해 주세요.');}
+  else if(kind==='wh'){
+    const one=re=>{const m=t.match(re);return m?+m[1].replace(/,/g,''):0;};
+    let ds=[];const pm=t.match(/근무\s*기간[^\n]*/);if(pm)ds=[...pm[0].matchAll(DATE_RE)];
+    if(ds.length<2){const near=t.slice(Math.max(0,t.search(/근무\s*기간|귀속\s*연도/)));ds=[...near.matchAll(DATE_RE)];}
+    const sal=one(/13\s*[.,]?\s*급\s*여\s*[|:]?\s*([\d,]{5,})/)||one(/(?:^|\n|\s)급\s*여\s+([\d,]{5,})/);
+    const bon=one(/14\s*[.,]?\s*상\s*여\s*[|:]?\s*([\d,]{4,})/);
+    const meal=one(/식\s*대\s*(?:[A-Z]\d{2}\s*)?([\d,]{4,})/);
+    if(ds.length>=2){$('#cJoin').value=toISO(...ds[0].slice(1,4));$('#cLeave').value=toISO(...ds[1].slice(1,4));WH_SET=true;found.push(`11.근무기간 ${$('#cJoin').value} ~ ${$('#cLeave').value}`);}
+    else found.push('근무기간을 찾지 못했습니다. 직접 확인하세요.');
+    if(sal){$('#cSal').value=sal;SRC.cur=`원천징수영수증 환산 (${label})`;found.push(`13.급여 ${sal.toLocaleString()}원`);}else{const inc=moneyAfter(t,[/총\s*급여/,/급\s*여/]);if(inc){$('#cSal').value=inc;SRC.cur=`원천징수영수증 환산 (${label})`;found.push(`급여 ${inc.toLocaleString()}원 (항목 번호를 못 찾아 추정, 확인 필요)`);}else found.push('13.급여를 찾지 못했습니다.');}
+    $('#cMeal').value=meal||0;found.push(meal?`비과세 식대 ${meal.toLocaleString()}원 (급여에 더함)`:'비과세 식대 없음');
+    $('#cWhBonus').value=bon||0;if(bon){$('#cBonus').value=Math.round(bon/10000);$('#pBonus').value=Math.round(bon/10000);found.push(`14.상여 ${bon.toLocaleString()}원 → 성과급 ${Math.round(bon/10000).toLocaleString()}만 원 별도로 표시`);}
+    if(/감면\s*소득|중소기업\s*취업/.test(t))found.push('18-32 중소기업 감면소득은 같은 금액을 다시 적은 것이라 더하지 않았습니다.');
+    if(curMode!=='convert')$$('#curMode button')[1].click();found.push('오퍼 산정의 ‘원천징수로 환산’에 넣었습니다.');}
+  else if(kind==='pay'){const P=payAmounts(t);const man=v=>Math.round(v/10000).toLocaleString();
+    let base=P.base,est=false;if(!base&&P.total){base=P.total-P.meal-P.ot;est=true;}
+    if(base){const y=Math.round(base*12/10000);const prevCur=+$('#pCur').value||0,fromReply=/회신|메일/.test(SRC.cur);
+      if(prevCur&&fromReply&&Math.abs(y-prevCur)/prevCur>0.1){
+        found.push(`이 서류의 기본급 기준 연봉은 약 <b>${y.toLocaleString()}만 원</b>인데, 회신에 적힌 금액(${prevCur.toLocaleString()}만 원)과 ${Math.round(Math.abs(y-prevCur)/prevCur*100)}% 차이가 있습니다(연봉 구성 항목이 다를 수 있음). 직전 연봉은 바꾸지 않았으니 어느 쪽이 맞는지 확인해 주세요.`);
+      }else{
+        $('#pCur').value=y;$('#cCur').value=y;if(curMode!=='direct')$$('#curMode button')[0].click();if(!SRC.cur.startsWith('원천'))SRC.cur=`급여명세서 ${est?'지급합계−식대·연장수당':'기본급'} × 12 (${label})`;
+        found.push(`${est?'기본급 칸을 못 찾아 지급 합계에서 식대·연장수당을 뺀':'기본급'} 월 ${base.toLocaleString()}원${P.n>1?` (명세서 ${P.n}개월 평균)`:''} → 직전 연봉 약 <b>${y.toLocaleString()}만 원</b>${est?' (추정, 확인 필요)':''}`);
+      }
+      const al=[];if(P.meal)al.push(`식대 월 ${man(P.meal)}만 원`);if(P.ot)al.push(`고정연장수당 월 ${man(P.ot)}만 원`);
+      if(al.length){$('#pAllow').value=al.join(', ');found.push(`연봉 외 수당: ${al.join(', ')} (연봉에 넣지 않고 따로 표시)`);}
+      if(P.total)found.push(`지급 합계 월 ${P.total.toLocaleString()}원`);
+      found.push('급여명세서만으로는 성과급을 알 수 없어, 원천징수영수증이 오면 함께 검증합니다.');}
+    else found.push('기본급·지급 합계 금액을 찾지 못했습니다. 스캔본이면 아래 ‘글자 인식’ 또는 붙여넣기를 이용해 주세요.');}
+  else found.push('서류 종류를 알아보지 못했습니다. 텍스트 붙여넣기를 이용하거나 직접 입력해 주세요.');
+  const auto={wh:[0,5],pay:[0,6],health:[3,7],cert:[3,7]}[kind]||[];
+  const boxes=$$('#pChecks input');auto.forEach(i=>{if(boxes[i]&&!boxes[i].checked){boxes[i].checked=true;boxes[i].dispatchEvent(new Event('change'));}});
+  if(auto.length)found.push('회신 체크리스트에 해당 항목을 자동으로 체크했습니다.');
+  html+=found.map(x=>'· '+x).join('<br>')+'<br><span class="hint">자동으로 읽은 값입니다. 원본과 한 번 대조해 주세요.</span></div>';
+  $('#docOut').insertAdjacentHTML('afterbegin',html);calc(true);
+}
+let ocrWorker=null;const OCR_FILES={};
+function loadScript(src){return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src=src;sc.onload=res;sc.onerror=()=>rej(new Error('글자 인식 도구를 불러오지 못했습니다.'));document.head.appendChild(sc);});}
+async function ocrPdf(file,onProg){
+  if(/^image\//.test(file.type)||/\.(png|jpe?g|webp)$/i.test(file.name)){if(!window.Tesseract)await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');if(!ocrWorker){onProg('글자 인식 준비 중 (처음 한 번은 30초 안팎 걸립니다)');ocrWorker=await Tesseract.createWorker('kor+eng');}onProg('이미지 글자 인식 중');const r=await ocrWorker.recognize(file);return r.data.text.replace(/(\d)\.(\d{3})(?=\D|$)/g,'$1,$2').replace(/(\d) ,(\d{3})/g,'$1,$2');}
+  const lib=await loadPdfjs();if(!window.Tesseract)await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js');
+  if(!ocrWorker){onProg('글자 인식 준비 중 (처음 한 번은 한국어 데이터를 받느라 30초 안팎 걸립니다)');ocrWorker=await Tesseract.createWorker('kor+eng');}
+  const doc=await lib.getDocument({data:await file.arrayBuffer()}).promise;let out='';
+  for(let p=1;p<=Math.min(doc.numPages,3);p++){onProg(`${p}/${Math.min(doc.numPages,3)}쪽 글자 인식 중`);const page=await doc.getPage(p);const vp=page.getViewport({scale:2.2});const cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;await page.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;const r=await ocrWorker.recognize(cv);out+=r.data.text+'\n';}
+  return out.replace(/(\d)\.(\d{3})(?=\D|$)/g,'$1,$2').replace(/(\d) ,(\d{3})/g,'$1,$2');
+}
+function mimeHeaders(block){const h={};let last=null;block.split(/\r?\n/).forEach(line=>{if(/^[ \t]/.test(line)&&last){h[last]+=' '+line.trim();return;}const m=line.match(/^([\w-]+):\s*(.*)$/);if(m){last=m[1].toLowerCase();h[last]=(h[last]?h[last]+' ':'')+m[2];}});return h;}
+function mimeSplit(text){const m=text.match(/\r?\n\r?\n/);if(!m)return {headers:mimeHeaders(text),body:''};const i=text.indexOf(m[0]);return {headers:mimeHeaders(text.slice(0,i)),body:text.slice(i+m[0].length)};}
+function mimeBoundary(ct){const m=(ct||'').match(/boundary=\"?([^\";]+)\"?/i);return m?m[1]:null;}
+function mimeDecodePart(headers,body){const cte=(headers['content-transfer-encoding']||'').toLowerCase();
+  if(cte==='base64'){try{return {bytes:true,str:atob(body.replace(/[^A-Za-z0-9+/=]/g,''))};}catch(e){return {bytes:false,str:''};}}
+  if(cte==='quoted-printable')return {bytes:true,str:body.replace(/=\r?\n/g,'').replace(/=([0-9A-F]{2})/gi,(_,h)=>String.fromCharCode(parseInt(h,16)))};
+  return {bytes:false,str:body};}
+function bstrToUtf8(bstr){const b=new Uint8Array(bstr.length);for(let i=0;i<bstr.length;i++)b[i]=bstr.charCodeAt(i);return new TextDecoder('utf-8').decode(b);}
+function bstrToBytes(bstr){const b=new Uint8Array(bstr.length);for(let i=0;i<bstr.length;i++)b[i]=bstr.charCodeAt(i);return b;}
+function decodeMimeWords(s){if(!s)return '';if(!/=\?[^?]+\?[Bb]\?/.test(s))return s.replace(/^"+|"+$/g,'').trim();
+  const re=/=\?[^?]+\?[Bb]\?([^?]*)\?=/g;let m,parts=[];while((m=re.exec(s))){try{parts.push(atob(m[1].replace(/[^A-Za-z0-9+/=]/g,'')));}catch(e){}}
+  return parts.length?bstrToUtf8(parts.join('')):s.replace(/^"+|"+$/g,'').trim();}
+function walkMime(text,out){const {headers,body}=mimeSplit(text);const ct=headers['content-type']||'text/plain';const boundary=mimeBoundary(ct);
+  if(boundary){const chunks=body.split('--'+boundary);for(let i=1;i<chunks.length;i++){const c=chunks[i];if(/^--/.test(c))break;walkMime(c.replace(/^\r?\n/,''),out);}return;}
+  const disp=headers['content-disposition']||'';
+  const fm=disp.match(/filename\*?=(?:UTF-8''|)?\"?([^\";\r\n]+)\"?/i)||ct.match(/name=\"?([^\";\r\n]+)\"?/i);
+  const filename=fm?decodeMimeWords(fm[1]):'';
+  const isAttach=/attachment/i.test(disp)||(/^(application|image)\//i.test(ct)&&filename);
+  const dec=mimeDecodePart(headers,body);
+  if(isAttach){if(dec.bytes)out.attachments.push({name:filename||'첨부파일',bytes:bstrToBytes(dec.str),type:ct.split(';')[0].trim()});return;}
+  const text2=dec.bytes?bstrToUtf8(dec.str):dec.str;
+  if(/text\/html/i.test(ct))out.htmls.push(text2);else if(/text\//i.test(ct))out.texts.push(text2);}
+function stripHtmlToText(html){const d=document.createElement('div');d.innerHTML=html.replace(/<br\s*\/?>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<\/div>/gi,'\n').replace(/<\/tr>/gi,'\n').replace(/<\/li>/gi,'\n');return (d.textContent||'').replace(/\n{3,}/g,'\n\n').trim();}
+async function handleEml(file){
+  let raw;try{raw=await file.text();}catch(e){$('#docOut').insertAdjacentHTML('afterbegin',`<div class=\"doc-card\"><b>${file.name}</b><br>메일 파일을 읽지 못했습니다.</div>`);return;}
+  const out={texts:[],htmls:[],attachments:[]};
+  try{walkMime(raw,out);}catch(e){$('#docOut').insertAdjacentHTML('afterbegin',`<div class=\"doc-card\"><b>${file.name}</b><br>메일 구조를 분석하지 못했습니다: ${e.message}</div>`);return;}
+  startDocs();
+  const body=(out.texts[0]||(out.htmls[0]?stripHtmlToText(out.htmls[0]):'')).trim();
+  const pdfs=out.attachments.filter(a=>/pdf/i.test(a.type)||/\.pdf$/i.test(a.name));
+  if(body){
+    $('#replyText').value=body;
+    $('#docOut').insertAdjacentHTML('afterbegin',`<div class=\"doc-card\"><b>${file.name}</b><br>메일 본문을 '회신 메일 붙여넣기' 칸에 넣고 바로 읽었습니다.${pdfs.length?` 첨부된 서류 ${pdfs.length}건도 이어서 분석합니다.`:' 첨부된 서류는 없었습니다.'}</div>`);
+    $('#replyParse').click();
+  }else{
+    $('#docOut').insertAdjacentHTML('afterbegin',`<div class=\"doc-card\"><b>${file.name}</b><br>메일 본문을 찾지 못했습니다.${pdfs.length?` 첨부 서류 ${pdfs.length}건은 분석합니다.`:' 내용을 복사해 붙여넣어 주세요.'}</div>`);
+  }
+  const pwM=(body||'').match(/(?:열람\s*)?(?:비밀번호|패스워드|password)\s*[:：]?\s*([A-Za-z0-9]{4,10})/i);const mailPw=pwM?pwM[1]:'';
+  for(const a of pdfs){
+    const pdfFile=new File([a.bytes],a.name||'첨부.pdf',{type:'application/pdf'});
+    try{let t='';const namePw=pwFromName(a.name);
+      try{t=await pdfText(pdfFile);}
+      catch(e){
+        if(/password/i.test(e.message||e.name||'')){
+          if(mailPw)try{t=await pdfText(pdfFile,mailPw);}catch(e2){}
+          if(!t&&namePw&&namePw!==mailPw)try{t=await pdfText(pdfFile,namePw);}catch(e3){}
+        }
+        if(!t){
+          const tried=[mailPw,namePw].filter(Boolean);
+          const pwHint=/password/i.test(e.message||e.name||'')?(tried.length?` ${tried.length>1?'메일 본문·파일명의 비밀번호':mailPw?'메일에 적힌 비밀번호':'파일명의 비밀번호'}(${tried.join(', ')})로도 열리지 않았습니다.`:' 비밀번호를 찾지 못했습니다. 파일명에 비밀번호를 적어 주시면(예: 자격득실확인서_940325.pdf) 자동으로 시도합니다.'):'';
+          $('#docOut').insertAdjacentHTML('afterbegin',`<div class=\"doc-card\"><b>${a.name} (메일 첨부)</b><br>${/password/i.test(e.message||e.name||'')?'비밀번호로 잠긴 파일입니다.'+pwHint:e.message}</div>`);continue;
+        }
+      }
+      if(!t.trim()){$('#docOut').insertAdjacentHTML('afterbegin',`<div class=\"doc-card\"><b>${a.name} (메일 첨부)</b><br>스캔본이라 바로 읽지 못했습니다. 파일을 꺼내 다시 올리면 글자 인식을 시도할 수 있습니다.</div>`);continue;}
+      handleText(t,a.name+' (메일 첨부)');
+    }catch(e){$('#docOut').insertAdjacentHTML('afterbegin',`<div class=\"doc-card\"><b>${a.name} (메일 첨부)</b><br>${e.message}</div>`);}
+  }
+}
+function pwFromName(name){
+  let m=(name||'').match(/(?:열람\s*)?(?:비밀번호|패스워드|pw|pass|password)[\s_:：-]*([A-Za-z0-9]{4,10})/i);if(m)return m[1];
+  m=(name||'').match(/\(([A-Za-z0-9]{4,10})\)(?=\.[A-Za-z0-9]+$)/);if(m)return m[1];
+  m=(name||'').match(/[_\-]([0-9]{6})(?=\.[A-Za-z0-9]+$)/);if(m)return m[1];
+  return '';}
+async function handleFiles(files){for(const fl of files){try{
+  if(/\.eml$/i.test(fl.name)||fl.type==='message/rfc822'){await handleEml(fl);continue;}
+  const isPdf=fl.type==='application/pdf'||/\.pdf$/i.test(fl.name);
+  const isImg=/^image\//.test(fl.type)||/\.(png|jpe?g|webp)$/i.test(fl.name);let t='';
+  if(isPdf){
+    try{t=await pdfText(fl);}
+    catch(e){
+      const namePw=pwFromName(fl.name);
+      if(/password/i.test(e.message||e.name||'')&&namePw){try{t=await pdfText(fl,namePw);}catch(e2){}}
+      if(!t){
+        if(/password/i.test(e.message||e.name||'')){
+          $('#docOut').insertAdjacentHTML('afterbegin',`<div class="doc-card"><b>${fl.name}</b><br>비밀번호로 잠긴 파일입니다.${namePw?` 파일명의 비밀번호(${namePw})로도 열리지 않았습니다.`:' 파일명에 비밀번호를 적어 주시면(예: 자격득실확인서_940325.pdf, 또는 \'비밀번호 940325\') 자동으로 시도합니다.'}</div>`);
+        }else{
+          $('#docOut').insertAdjacentHTML('afterbegin',`<div class="doc-card"><b>${fl.name}</b><br>${e.message}</div>`);
+        }
+        continue;
+      }
+    }
+  }else if(!isImg)t=await fl.text();
+  if(!t.trim()&&(isImg||isPdf)){const id='ocr'+Math.random().toString(36).slice(2);OCR_FILES[id]=fl;startDocs();
+    $('#docOut').insertAdjacentHTML('afterbegin',`<div class="doc-card" id="${id}"><b>${fl.name}</b><br>${isImg?'캡처 이미지라':'스캔본(이미지)이라'} 바로 읽지 못했습니다. ‘글자 인식’을 누르면 읽어서 바로 반영하고, 인식한 글은 붙여넣기 칸에 남겨 둡니다. 직접 넣으려면 급여명세서는 <b>기본급·식대</b>, 원천징수영수증은 <b>11.근무기간 · 13.급여 · 14.상여 · 18-40 비과세 식대</b> 네 칸만 오퍼 산정에 직접 입력해 주세요.<br><button class="btn" data-ocr="${id}" style="margin-top:6px">글자 인식으로 읽기 (숫자 확인 필요)</button> <span class="hint"></span></div>`);
+    document.querySelector(`[data-ocr="${id}"]`).addEventListener('click',async e=>{const btn=e.target,hint=btn.nextElementSibling;btn.disabled=true;
+      try{const txt=await ocrPdf(OCR_FILES[id],m=>{hint.textContent=m;});$('#docText').value=txt;$('#docText').closest('details').open=true;handleText(txt,OCR_FILES[id].name+' (글자 인식)');hint.textContent='읽어서 반영했습니다. 글자 인식은 숫자를 틀릴 수 있으니 원본과 대조하고, 틀리면 붙여넣기 칸에서 고친 뒤 다시 읽으세요.';}
+      catch(err){hint.textContent=err.message;}btn.disabled=false;});
+    continue;}
+  if(!t.trim()){$('#docOut').insertAdjacentHTML('afterbegin',`<div class="doc-card"><b>${fl.name}</b><br>글자를 읽지 못했습니다. 내용을 복사해 붙여넣거나 직접 입력해 주세요.</div>`);continue;}
+  handleText(t,fl.name);}catch(e){$('#docOut').insertAdjacentHTML('afterbegin',`<div class="doc-card"><b>${fl.name}</b><br>${e.message}</div>`);}}}
+['cCur'].forEach(id=>$('#'+id).addEventListener('input',()=>{SRC.cur='직접 입력';}));['cSal','cMeal','cJoin','cLeave'].forEach(id=>$('#'+id).addEventListener('input',()=>{if(!SRC.cur.startsWith('원천'))SRC.cur='원천징수 환산(직접 입력)';}));
+$('#docFile').addEventListener('change',e=>handleFiles([...e.target.files]));
+const dz=$('#docDrop');['dragover','dragenter'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('on');}));['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('on');}));
+dz.addEventListener('drop',e=>handleFiles([...e.dataTransfer.files]));
+$('#docParse').addEventListener('click',()=>{const t=$('#docText').value;if(t.trim())handleText(t,'붙여넣은 내용');});
+['pName','pPos','pOwner','pCo'].forEach(id=>$('#'+id).addEventListener('input',preDraft));
+{const ps=store.get('preSent',null);if(ps){$('#pSent').hidden=false;$('#pSent').textContent=`최근 요청 메일: ${ps.d} · ${ps.to}`;}}
+function markSent(how){const d=ymd(new Date());$('#pSent').hidden=false;$('#pSent').textContent=`${how}로 ${$('#pName').value||'지원자'}님께 보낼 메일을 열었습니다 (${d}). 메일 창에서 보내기를 눌렀는지 확인하고, 회신이 오면 2단계로 넘어가세요.`;store.set('preSent',{d,to:$('#pMail').value});}
+function mailParts(){return {to:$('#pMail').value.trim(),cc:$('#pCc').value.trim(),su:$('#pSubj').value,body:$('#pDraft').value};}
+$('#pSendMail').addEventListener('click',async()=>{const m=mailParts();if(!m.to){$('#pToast').textContent='지원자 이메일을 입력해 주세요.';return;}
+  const ok=await copyRich();$('#pToast').textContent=ok?'표 양식 본문을 복사했습니다. 메일 창 본문에 Ctrl+V로 붙여넣으세요.':'복사가 막혔습니다. 미리보기를 드래그해 복사해 주세요.';
+  location.href=`mailto:${encodeURIComponent(m.to)}?${m.cc?`cc=${encodeURIComponent(m.cc)}&`:''}subject=${encodeURIComponent(m.su)}`;markSent('메일 앱');autosave();setSt('사전정보 요청');});
+$('#pSendGmail').addEventListener('click',async()=>{const m=mailParts();if(!m.to){$('#pToast').textContent='지원자 이메일을 입력해 주세요.';return;}
+  const ok=await copyRich();$('#pToast').textContent=ok?'표 양식 본문을 복사했습니다. Gmail 본문에 Ctrl+V로 붙여넣으세요.':'복사가 막혔습니다. 미리보기를 드래그해 복사해 주세요.';
+  window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(m.to)}${m.cc?`&cc=${encodeURIComponent(m.cc)}`:''}&su=${encodeURIComponent(m.su)}`,'_blank','noopener');markSent('Gmail');autosave();setSt('사전정보 요청');});
+$('#pNext').addEventListener('click',()=>document.querySelector('.tabs [data-tab=reply]').click());
+$('#pCopy').addEventListener('click',async()=>{const ok=await copyRich();$('#pToast').textContent=ok?'표 양식 본문을 복사했습니다. 메일 본문에 붙여넣으세요.':'복사가 막혔습니다. 미리보기를 드래그해 복사해 주세요.';});
+$('#pToCalc').addEventListener('click',()=>{
+  if(+$('#pCur').value){if(curMode!=='direct')$$('#curMode button')[0].click();SRC.cur=SRC.cur.startsWith('급여')?SRC.cur:'회신 메일 (현재 연봉)';}
+  else if(+$('#cSal').value){if(curMode!=='convert')$$('#curMode button')[1].click();}
+  const nmv=$('#rName').value||$('#pName').value;setName(nmv);
+  if(!nmv){$('#rName').style.borderColor='var(--bad)';$('#rName').focus();$('#replyOut').textContent='지원자 이름을 먼저 입력해 주세요.';return;}
+  $('#rName').style.borderColor='';$('#cCur').value=$('#pCur').value;$('#cBonus').value=$('#pBonus').value;$('#cWant').value=$('#pWant').value;{const st=D($('#pStart').value),today=new Date();today.setHours(0,0,0,0);$('#cDate').value=st&&st>=today?$('#pStart').value:'';}
+  const t0=careerTotal(),t=CAREER.some(r=>!r.ex)?t0:(REPLY_MONTHS||t0);const curGuess=+$('#pCur').value||0;const fitLv=()=>{const B=BANDS[$('#cJob').value];let pick='LV1';const tg=curGuess*1.1;LVS.forEach(l=>{if(tg>=B[l][0])pick=l;});return pick;};
+  $('#cLv').value=/리드|lead|팀장/i.test($('#cRole').value)?'LV4':t>0?(t<36?'LV1':t<84?'LV2':'LV3'):(curGuess?fitLv():$('#cLv').value);
+  $('#cCareer').value=t>0?ym(t).replace(' 0개월',''):'';const cur=[...CAREER].filter(r=>!r.ex).sort((a,b)=>b.s>a.s?1:-1)[0];if(cur)$('#cNow').value=cur.c+(cur.e?' 퇴사':' 재직 중');else if(REPLY_NOW)$('#cNow').value=REPLY_NOW+' 재직 중';$('#cAllow').value=fmtAllow($('#pAllow').value);if(!$('#cAvail').value)$('#cAvail').value=$('#pStart').value;
+  const memo=$('#pAllow').value?`연봉 외 수당: ${fmtAllow($('#pAllow').value)}`:'';const prevMemo=$('#cMemo').value.split(' · ').filter(x=>x&&!/^연봉 외 수당|^총 경력/.test(x));$('#cMemo').value=[...prevMemo,memo,t>0?`총 경력 ${Math.floor(t/12)}년 ${t%12}개월`:''].filter(Boolean).join(' · ');
+  calc(true);autosave();setSt('서류 회신');document.querySelector('.tabs [data-tab=calc]').click();
+  if(!scores().length)setTimeout(()=>$('#cScores').focus(),50);
+});
+preDraft();preChecks();careerRender();calc(true);
+
+// ---- example values live in placeholders; real use starts empty ----
+const SAMPLE_IDS=['pName','pMail','pPos','pOwner','pCur','pBonus','pAllow','pWant','pStart','cName','cDate','cTeam','cRole','cNow','cCareer','cAllow','cAvail','cCur','cBonus','cJoin','cLeave','cSal','cMeal','cWhBonus','cWant','cScores','cMemo','cInc'];
+const SAMPLE={};SAMPLE_IDS.forEach(id=>{const e=$('#'+id);if(!e)return;SAMPLE[id]=e.value;if(e.type!=='date'&&e.value&&!e.readOnly)e.placeholder='예) '+e.value;e.value='';});
+SAMPLE.pCo=$('#pCo').value;
+function fillDemo(){SAMPLE_IDS.forEach(id=>{const e=$('#'+id);if(e)e.value=SAMPLE[id]||'';});$('#cLv').value='LV2';$('#cJob').value='ae';if(curMode!=='direct')$$('#curMode button')[0].click();CAREER=JSON.parse(JSON.stringify(CAREER_DEMO));careerRender();SRC.cur='예시 값';docsLoaded=false;WH_SET=false;preDraft();calc(true);}
+function clearAll(keep){if(!keep){CURID=null;saveCases();caseBar();}if($('#sAttach')){$('#sAttach').checked=false;delete $('#sAttach').dataset.touched;}if($('#sLetter')){$('#sLetter').innerHTML='';delete $('#sLetter').dataset.touched;}['pMail','pCc','pPos','pOwner','cTeam','cRole','cMemo','cOffer','sMail','sCc','sDate','sOffer','sWelcome','sPosLine','sDuty','replyText'].forEach(id=>{const e=$('#'+id);if(e){e.value='';delete e.dataset.touched;}});$('#cWelcome').value=0;$('#cRoute').selectedIndex=0;SAMPLE_IDS.forEach(id=>{const e=$('#'+id);if(e)e.value='';});$('#rName').value='';CAREER=[];careerRender();SRC.cur='직접 입력';docsLoaded=false;WH_SET=false;$('#docOut').innerHTML='';$('#replyText').value='';$('#replyOut').textContent='';$$('#pChecks input').forEach(x=>{x.checked=false;});store.set('preChecks',{});preChecks();preDraft();calc(true);}
+
+// keep applicant name in sync across steps
+function setName(v){['pName','rName','cName'].forEach(id=>{const e=$('#'+id);if(e&&e.value!==v)e.value=v;});preDraft();}
+['pName','rName'].forEach(id=>$('#'+id).addEventListener('input',e=>setName(e.target.value)));
+$('#cName').addEventListener('input',e=>{['pName','rName'].forEach(id=>{$('#'+id).value=e.target.value;});preDraft();});
+document.querySelector('.tabs [data-tab=reply]').addEventListener('click',()=>{$('#rName').value=$('#pName').value;});
+$('#fillDemo').addEventListener('click',()=>{CURID=null;fillDemo();$('#rName').value=$('#pName').value;autosave();});$('#clearAll').addEventListener('click',()=>{clearAll();document.querySelector('.tabs [data-tab=pre]').click();});
+preDraft();careerRender();calc(true);
+if(CURID)loadCase(CURID,false);caseBar();renderTrack();
+
+// reply email parser
+function fmtAllow(v){v=(v||'').trim();if(/^\d[\d,]*$/.test(v)){const n=+v.replace(/,/g,'');return n>=10000?`월 ${Math.round(n/10000).toLocaleString()}만 원`:`월 ${n.toLocaleString()}만 원`;}return v;}
+var REPLY_MONTHS=0,REPLY_NOW='';
+function manwon(str){if(!str)return 0;const c=str.replace(/\s/g,'');const m=c.match(/([\d,.]+)(억|천만|만원|만|원)/)||c.match(/([\d,.]+)()/);if(!m)return 0;let v=parseFloat(m[1].replace(/,/g,''));const u=m[2]||'';
+  if(u==='억')v*=10000;else if(u==='천만')v*=1000;else if(u==='원'||(!u&&v>=1000000))v=v/10000;return Math.round(v);}
+const LABELS=['현재\\s*연봉','최종\\s*연봉','희망\\s*연봉','연봉\\s*외\\s*수당','기대\\s*연봉','희망\\s*연봉','총\\s*경력','입사\\s*가능','증빙\\s*서류'];
+function findSeg(t,keys){for(const k of keys){const m=t.match(new RegExp(k));if(!m)continue;const st=m.index;let en=t.length;
+  LABELS.forEach(L=>{const r=new RegExp(L,'g');r.lastIndex=st+m[0].length;const x=r.exec(t);if(x&&x.index>st+m[0].length&&x.index<en)en=x.index;});
+  return t.slice(st+m[0].length,en);}return '';}
+function grab(t,keys){const seg=findSeg(t,keys);if(!seg)return '';
+  const first=seg.split('\n')[0].replace(/^[\s:：]+/,'').trim();if(first&&/^[\d]/.test(first))return first;const ans=seg.match(/(?:^|\n)\s*[:：]\s*([^\n]+)/);if(ans&&ans[1].trim())return ans[1].trim();
+  const lines=seg.split('\n').map(x=>x.replace(/^[\s:：]+/,'').trim()).filter(x=>x&&!/수준$|바랍니다|요청 드립니다|제외\)$|주세요/.test(x));if(lines.length)return lines[lines.length-1];return '';}
+function companyPairs(seg){const lines=seg.split('\n').map(x=>x.trim());const out=[];
+  for(let i=0;i<lines.length-1;i++){const name=lines[i],val=lines[i+1];
+    if(!name||!val||/\d/.test(name)||name.length>26||/수준$|기재|해당|없으면|바랍니다|주세요|예\)|예:|:$/.test(name))continue;
+    if(/[\d,]{3,}\s*(?:만\s*원|만|원|억)/.test(val))out.push({name,val});}
+  return out;}
+$('#replyParse').addEventListener('click',()=>{
+  const t=$('#replyText').value;if(!t.trim()){$('#replyOut').textContent='답장 내용을 붙여넣어 주세요.';return;}
+  if(!docsLoaded){docsLoaded=true;CAREER=[];careerRender();}
+  if(!$('#pName').value){const nm=t.match(/(?:안녕하세요[,.!\s]*|^\s*)(?:저는\s*)?([가-힣]{2,4})\s*(?:입니다|이라고|드림)/m);if(nm&&!/지원자|담당자|채용팀/.test(nm[1])){setName(nm[1]);}}
+  const got=[],warns=[];
+  {const introEnd=t.search(/Check\s*List|최종\s*연봉\s*및?\s*성과급|현재\s*연봉/);const intro=introEnd>0?t.slice(0,introEnd).trim():'';
+    if(intro&&intro.replace(/\n+/g,' ').length>8)warns.push(`회신 도입부: "${intro.replace(/\n+/g,' ').slice(0,220)}${intro.length>220?'…':''}" — 특이사항(예: 어느 직장 기준으로 적었는지)이 있는지 꼭 읽어 보세요.`);}
+  const salSeg=findSeg(t,['최종\\s*연봉\\s*및?\\s*성과급','현재\\s*연봉\\s*및\\s*성과급','최종\\s*연봉','현재\\s*연봉','기본급']);
+  const salPairs=companyPairs(salSeg);
+  let sal='';
+  if(salPairs.length>=2){
+    warns.push(`최종 연봉·성과급에 직장이 ${salPairs.length}곳 함께 적혀 있습니다 — 어느 쪽을 기준으로 할지 직접 확인해 주세요: ${salPairs.map(p=>`${p.name} (${p.val})`).join(' / ')}`);
+    sal=salPairs[0].val;const v=manwon(sal);if(v){$('#pCur').value=v;got.push(`직전 연봉 ${v.toLocaleString()}만 원 (잠정: ${salPairs[0].name} 기준, 확인 필요)`);}
+    const b=sal.match(/(?:성과급|인센티브|상여)[^,]*?([\d,.]+\s*(?:억|천만|만\s*원|만|원))/);if(b){const bv=manwon(b[1]);if(bv){$('#pBonus').value=bv;got.push(`성과급 ${bv.toLocaleString()}만 원 (잠정)`);}}
+  }else{
+    sal=grab(t,['현재\\s*연봉\\s*및\\s*성과급','최종\\s*연봉','현재\\s*연봉','기본급']);
+    if(sal){const v=manwon(sal);if(v){$('#pCur').value=v;got.push(`직전 연봉 ${v.toLocaleString()}만 원`);}
+      const b=sal.match(/(?:성과급|인센티브|상여)[^\n]*?([\d,.]+\s*(?:억|천만|만\s*원|만|원))/);if(b){const bv=manwon(b[1]);if(bv){$('#pBonus').value=bv;got.push(`성과급 ${bv.toLocaleString()}만 원`);}}}
+  }
+  const bon2=grab(t,['성과급\\s*\\(?인센티브','인센티브']);if(bon2&&!$('#pBonus').value){const bv=manwon(bon2);if(bv){$('#pBonus').value=bv;got.push(`성과급 ${bv.toLocaleString()}만 원`);}}
+  const allowSeg=findSeg(t,['연봉\\s*외\\s*수당','수당']);const allowPairs=companyPairs(allowSeg);let allow='';
+  if(allowPairs.length>=2){warns.push(`연봉 외 수당도 직장이 ${allowPairs.length}곳 함께 적혀 있습니다: ${allowPairs.map(p=>`${p.name} (${p.val})`).join(' / ')}`);allow=allowPairs[0].val;$('#pAllow').value=allow;got.push('연봉 외 수당 (잠정, 확인 필요)');}
+  else{allow=grab(t,['연봉\\s*외\\s*수당','수당']);if(allow){$('#pAllow').value=allow;got.push('연봉 외 수당');}}
+  const want=grab(t,['기대\\s*연봉','희망\\s*연봉']);let wantNum=0;
+  if(want){wantNum=manwon(want);if(wantNum){$('#pWant').value=wantNum;got.push(`희망 연봉 ${wantNum.toLocaleString()}만 원`);}
+    else{$('#pWant').value='회사 내규에 따름';got.push('희망 연봉: 회사 내규에 따름 (금액 지정 없음)');}}
+  const avail=grab(t,['입사\\s*가능\\s*일','입사\\s*가능','합류\\s*가능']);if(avail){const yy=avail.match(/^(\d{2})\s*[.\-/]\s*(\d{1,2})$/);if(yy){$('#pStart').value=toISO(2000+ +yy[1],+yy[2],1);}else{const m=avail.match(/(?:(\d{4})\s*[.년\-]\s*)?(\d{1,2})\s*[월.\-/]\s*(\d{1,2})?/);if(m){const now=new Date();let y=m[1]?+m[1]:now.getFullYear();const mo=+m[2],d=m[3]?+m[3]:1;if(!m[1]&&mo<now.getMonth()+1)y++;$('#pStart').value=toISO(y,mo,d);}}$('#cAvail').value=avail;got.push(`입사 가능일 ${avail}`);}
+  const career=grab(t,['총\\s*경력']);if(career){let mo=0;[...career.matchAll(/(\d+)\s*년(?:\s*(\d+)\s*개월)?|(\d+)\s*개월/g)].forEach(x=>{if(/총/.test(career.slice(Math.max(0,x.index-3),x.index)))return;mo+=x[1]?(+x[1])*12+(+x[2]||0):+x[3];});
+    const tot=career.match(/총\s*(\d+)\s*년(?:\s*(\d+)\s*개월)?/);if(tot)mo=(+tot[1])*12+(+tot[2]||0);
+    if(mo){REPLY_MONTHS=mo;$('#cCareer').value=ym(mo).replace(' 0개월','');}const comps=[...career.matchAll(/([^,()\d]+?)\s*\(\s*\d+\s*(?:년|개월)/g)].map(x=>x[1].replace(/^[\s:：,]+/,'').trim()).filter(Boolean);if(comps.length){REPLY_NOW=comps[comps.length-1];}$('#cMemo').value=`경력(회신): ${career}`;
+    const docM=CAREER.length?careerTotal():0;got.push(`총 경력 ${mo?ym(mo):career}`+(docM&&mo&&Math.abs(docM-mo)>=3?` · 서류 기준 ${ym(docM)}과 ${Math.abs(docM-mo)}개월 차이, 확인 필요`:''));}
+  ['연봉·성과급','연봉 외 수당','희망 연봉','총 경력기간','입사 가능일'].forEach((k,i)=>{const ok=[sal,allow,want,career,avail][i];const bx=$$('#pChecks input')[i];if(ok&&bx&&!bx.checked){bx.checked=true;bx.dispatchEvent(new Event('change'));}});
+  if(sal||want)SRC.cur=SRC.cur.startsWith('원천')?SRC.cur:'회신 메일';
+  $('#replyOut').innerHTML=(got.length?'읽음: '+got.join(' · '):'항목을 찾지 못했습니다. 아래 칸에 직접 입력해 주세요.')+(warns.length?warns.map(w=>`<div class="flag warn" style="margin-top:6px">${w}</div>`).join(''):'');
+});
+</script>
+</body>
+</html>
