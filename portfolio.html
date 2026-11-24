@@ -363,12 +363,15 @@ footer h2{font-size:clamp(26px,3.6vw,40px);line-height:1.3;max-width:20ch}
             <div><b>HR 마스터시트 자동 갱신</b>결재 승인 시 입사·전환·퇴사 일자 기록, 퇴사자 이동</div>
             <div><b>Slack HR 알림봇</b>인사 결재 일일 집계, 즉시 조회, 입퇴사 요약, 휴가 통계</div>
             <div><b>온보딩 공지 자동 생성</b>입사 캘린더 연동, 팀장 자동 멘션·캘린더 초대</div>
-            <div><b>버디·전속계약금</b>버디 자동매칭과 전용 채널, 계약금 지급·만기 알림</div>
+            <div><b>버디 자동매칭</b>Slack 수락 버튼과 전용 채널 자동 생성</div>
+            <div><b>전속계약금 자동화</b>신규지급·종기도래 자동 안내, 이모지 승인 게이트, 부문별 채널 분리</div>
+            <div><b>소득세감면 안내 자동화</b>대상자별 Slack 개별 발송, 시트 자동 기록, 실패 사유 자동 분류</div>
             <div><b>법정의무교육 독려</b>553명 개인 DM과 리더 동시 독려</div>
           </div>
           <ul style="margin-top:16px">
-            <li>모든 대외 발송은 <b>'초안 → 담당자 승인 → 발송'</b> 검수 단계를 두어 설계</li>
-            <li>HRIS 전환(FLEX → 더존 아마란스), 인사제도 Notion 위키화, 전사 AI 교육(바이브코딩 3기, Claude Code 8회) 추진·운영</li>
+            <li>모든 대외 발송은 초안 → 담당자 승인 → 발송의 검수 단계를 거치도록 설계</li>
+            <li>HRIS 전환(FLEX → 더존 아마란스), 인사제도 Notion 위키화, 전사 AI 교육(바이브코딩 3기, Claude Code 10회) 추진·운영</li>
+            <li>HR 자동화 6종을 독립 모듈로 설계. 모듈별 설치 가이드·동작 요약·테스트 절차를 문서화해 운영 인수인계가 가능한 수준으로 구축</li>
           </ul>
           <p style="margin-top:14px;font-size:15px"><a href="demo.html">가상 데이터로 만든 동작 데모 보기</a></p>
         </div>
@@ -377,7 +380,7 @@ footer h2{font-size:clamp(26px,3.6vw,40px);line-height:1.3;max-width:20ch}
           <div class="cap">특별휴가 결재 자동승인 (463건 중 355건)</div>
           <div class="row"><span>법정교육 수료율</span><span>94%</span></div>
           <div class="row"><span>직접 구축한 자동화</span><span>10여 종</span></div>
-          <div class="row"><span>Claude Code 교육</span><span>8회 운영</span></div>
+          <div class="row"><span>Claude Code 교육</span><span>10회 운영</span></div>
         </div>
       </div>
     </div>
