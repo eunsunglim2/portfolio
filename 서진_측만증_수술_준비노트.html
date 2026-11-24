@@ -86,6 +86,9 @@ details{background:var(--surface);border:1px solid var(--line);border-radius:12p
 summary{cursor:pointer;font-weight:700}
 details ul{padding-left:18px;margin:10px 0 0}
 details li{word-break:break-all}
+.exam{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.steps{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:8px}
+.steps small{display:block;color:var(--muted);font-size:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
@@ -106,18 +109,29 @@ details li{word-break:break-all}
   <div class="tbl"><table>
     <thead><tr><th>날짜</th><th>내용</th></tr></thead>
     <tbody>
+      <tr><td class="num"><b>11/26(목)<br>9:20</b></td><td><b>수술 전 검사</b> (아래 순서 참고)</td></tr>
       <tr><td class="num"><b>12/6(일)<br>오후 3시</b></td><td><b>입원</b><br>입원 당일 카카오톡 알림톡이 오면 모바일로 입원수속 → 알림톡에 나온 배정 병동으로 오후 3시에 입실. 모바일이 어려우면 1층 입퇴원 창구에서 수속</td></tr>
       <tr><td class="num">12/6 저녁</td><td>척추 MRI(비급여)·CT 촬영. <b>입원비에 포함되니 미리 수납하지 마세요.</b> 입원 당일 낮에는 금식하지 않아도 됩니다</td></tr>
       <tr><td class="num"><b>12/7(월)</b></td><td><b>수술.</b> 수술 시간은 전날 밤이나 수술 당일에 정해집니다</td></tr>
     </tbody>
   </table></div>
-  <details open><summary>11/26(목) 수술 전 검사</summary><p class="small muted">상담실 문자에는 11/16로 왔지만 11/26로 변경됨. 아래 순서·시간은 처음 문자 기준이라 바뀌었을 수 있으니 상담실 안내를 다시 확인하세요</p><ul class="small">
-    <li>9시 20분까지 도착, 4시간 금식(생수는 가능). 검사는 모두 0층(정형외과 한 층 아래)</li>
-    <li>수납 → 심전도 → 폐기능검사 → 채혈(소변은 중간뇨) → 흉부 X-ray</li>
-    <li>10:20 A관 2층 심혈관센터 하기수 교수 진료, 이후 식사 가능</li>
-    <li>1층 입퇴원 창구에서 희망 병실 신청(카카오톡으로 했으면 생략)</li>
-    <li>14:05 C관 3층 소아과 송대진 교수(호흡기) 진료 후 귀가</li>
-  </ul></details>
+  <div class="exam">
+    <h3>11/26(목) 수술 전 검사 순서</h3>
+    <p class="small muted">병원 알림톡(11/24)과 상담실 문자 기준. 진료 전에 검사를 모두 끝내야 진료를 볼 수 있습니다</p>
+    <ol class="steps">
+      <li><b>9:20까지 도착</b><small>검사 4시간 전부터 금식, 생수는 가능(상담실 문자 기준). 금식 여부는 진료과 안내를 따르라고 되어 있으니 전날 다시 확인</small></li>
+      <li><b>수납</b> · 1층 또는 0층 수납창구</li>
+      <li><b>심전도 → 폐기능검사</b> · 0층 수술전 검사실<small>처음 상담실 문자에 있던 항목. 알림톡엔 따로 안 왔으니 수납 때 오늘 검사 목록 확인</small></li>
+      <li><b>채혈</b> · A관(본관) 1층 또는 B관(신관) 0층 채혈실<small>소변은 중간뇨로 받기</small></li>
+      <li><b>흉부 X-ray</b> · 영상의학과, B관(신관) 1층 또는 C관(미래관) 0층<small>목걸이·와이어·후크 없는 속옷이면 옷 갈아입지 않고 바로 촬영</small></li>
+      <li><b>10:20 소아청소년과 하기수 교수</b> · A관(본관) 2층 심혈관센터<small>척추수술 상담실 문자 기준. 알림톡엔 소아청소년과 기본 위치(C관 3층)로 찍혀 있으니, 헷갈리면 A관 2층으로 먼저 가세요. 진료 전 수납 → [도착확인기] 접수, 진료 후 식사 가능</small></li>
+      <li><b>희망 병실 신청</b> · 1층 입퇴원 창구<small>카카오톡으로 이미 했으면 생략</small></li>
+      <li><b>점심, 대기</b><small>오후 진료까지 3시간 넘게 비니 병원 식당가에서 쉬기</small></li>
+      <li><b>14:05 소아청소년과 송대진 교수(호흡기)</b> · C관(미래관) 3층<small>수납 → [도착확인기] 접수 → 진료 후 귀가</small></li>
+    </ol>
+    <div class="note"><b>챙길 것</b>: 환자 실물 신분증 또는 모바일 건강보험증(사본·사진은 안 됨), 복용 중인 약 처방전, 금속 없는 속옷, 학교 제출용 <b>진료비 영수증</b> 받기. 예약 환자가 많으면 대기가 길어질 수 있습니다.</div>
+    
+  </div>
 </section>
 
 <section id="timeline">
